@@ -5,12 +5,68 @@
 <%- include('../partials/nav') %>
 <%- include('../partials/flash') %>
 <h1>Create New User</h1>
-<p>Select the type of user to create:</p>
-<ul>
-  <li><a href="/register/player">Create Player</a></li>
-  <li><a href="/register/manager">Create Manager</a></li>
-  <li><a href="/register/referee">Create Referee</a></li>
-  <li><a href="/register/db-manager">Create Database Manager</a></li>
-</ul>
+<p>Database managers can create player, manager, referee, and database manager accounts from this panel.</p>
+
+<form method="POST" action="/db-manager/create-user">
+  <p>
+    <label>Role:
+      <select name="role">
+        <option value="player" <%= selectedRole === 'player' ? 'selected' : '' %>>Player</option>
+        <option value="manager" <%= selectedRole === 'manager' ? 'selected' : '' %>>Manager</option>
+        <option value="referee" <%= selectedRole === 'referee' ? 'selected' : '' %>>Referee</option>
+        <option value="db_manager" <%= selectedRole === 'db_manager' ? 'selected' : '' %>>Database Manager</option>
+      </select>
+    </label>
+  </p>
+
+  <p><label>Username: <input type="text" name="username" value="<%= body.username || '' %>" required></label></p>
+  <p><label>Password: <input type="password" name="password" required></label></p>
+
+  <p><label>Name: <input type="text" name="name" value="<%= body.name || '' %>"></label></p>
+  <p><label>Surname: <input type="text" name="surname" value="<%= body.surname || '' %>"></label></p>
+  <p><label>Nationality: <input type="text" name="nationality" value="<%= body.nationality || '' %>"></label></p>
+  <p><label>Date of Birth: <input type="date" name="date_of_birth" value="<%= body.date_of_birth || '' %>"></label></p>
+
+  <p><label>Market Value: <input type="number" name="market_value" min="1" value="<%= body.market_value || '' %>"></label></p>
+  <p>
+    <label>Main Position:
+      <select name="main_position">
+        <option value="Goalkeeper" <%= body.main_position === 'Goalkeeper' ? 'selected' : '' %>>Goalkeeper</option>
+        <option value="Defender" <%= body.main_position === 'Defender' ? 'selected' : '' %>>Defender</option>
+        <option value="Midfielder" <%= body.main_position === 'Midfielder' ? 'selected' : '' %>>Midfielder</option>
+        <option value="Forward" <%= body.main_position === 'Forward' ? 'selected' : '' %>>Forward</option>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Strong Foot:
+      <select name="strong_foot">
+        <option value="Right" <%= body.strong_foot === 'Right' ? 'selected' : '' %>>Right</option>
+        <option value="Left" <%= body.strong_foot === 'Left' ? 'selected' : '' %>>Left</option>
+        <option value="Both" <%= body.strong_foot === 'Both' ? 'selected' : '' %>>Both</option>
+      </select>
+    </label>
+  </p>
+  <p><label>Height (cm): <input type="number" name="height_cm" min="1" value="<%= body.height_cm || '' %>"></label></p>
+
+  <p><label>Preferred Formation: <input type="text" name="preferred_formation" value="<%= body.preferred_formation || '' %>"></label></p>
+  <p>
+    <label>Experience Level:
+      <select name="experience_level">
+        <option value="Beginner" <%= body.experience_level === 'Beginner' ? 'selected' : '' %>>Beginner</option>
+        <option value="Intermediate" <%= body.experience_level === 'Intermediate' ? 'selected' : '' %>>Intermediate</option>
+        <option value="Advanced" <%= body.experience_level === 'Advanced' ? 'selected' : '' %>>Advanced</option>
+        <option value="Expert" <%= body.experience_level === 'Expert' ? 'selected' : '' %>>Expert</option>
+      </select>
+    </label>
+  </p>
+
+  <p><label>License Level: <input type="text" name="license_level" value="<%= body.license_level || '' %>"></label></p>
+  <p><label>Years of Experience: <input type="number" name="years_experience" min="0" value="<%= body.years_experience || '' %>"></label></p>
+
+  <p><button type="submit">Create User</button></p>
+</form>
+
+<p>Role-specific fields should be filled according to the selected role. Database manager accounts only require username and password.</p>
 </body>
 </html>

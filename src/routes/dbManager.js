@@ -1,9 +1,33 @@
 // routes/dbManager.js — HTTP layer only; all SQL is in queries/dbManager.js
 const express  = require('express');
+const crypto   = require('crypto');
 const q        = require('../queries/dbManager');
 const { requireLogin } = require('../middleware/auth');
 const router   = express.Router();
 const guard    = requireLogin('db_manager');
+
+function hashPassword(plain) {
+  return crypto.createHash('sha256').update(plain).digest('hex');
+}
+
+function validatePassword(plain) {
+  if (plain.length < 8)              return 'Password must be at least 8 characters.';
+  if (!/[A-Z]/.test(plain))         return 'Password must contain an uppercase letter.';
+  if (!/[a-z]/.test(plain))         return 'Password must contain a lowercase letter.';
+  if (!/[0-9]/.test(plain))         return 'Password must contain a digit.';
+  if (!/[@#$%&!^*()\-_=+[\]{}|;:,.<>?/~`]/.test(plain))
+    return 'Password must contain a special character.';
+  return null;
+}
+
+function requireFields(values) {
+  for (const [label, value] of values) {
+    if (value === undefined || value === null || String(value).trim() === '') {
+      return `${label} is required.`;
+    }
+  }
+  return null;
+}
 
 router.get('/',          guard, (req, res) => res.render('db_manager/dashboard'));
 
@@ -120,6 +144,109 @@ router.post('/register-transfer', guard, async (req, res) => {
   }
 });
 
-router.get('/create-user', guard, (req, res) => res.render('db_manager/create_user'));
+router.get('/create-user', guard, (req, res) =>
+  res.render('db_manager/create_user', { body: {}, selectedRole: 'player' }));
+
+router.post('/create-user', guard, async (req, res) => {
+  const selectedRole = req.body.role || 'player';
+  const body = req.body;
+
+  const passwordError = validatePassword(req.body.password || '');
+  if (passwordError) {
+    req.session.flash = passwordError;
+    return res.render('db_manager/create_user', { body, selectedRole });
+  }
+
+  try {
+    const passwordHash = hashPassword(req.body.password);
+
+    if (selectedRole === 'db_manager') {
+      const fieldError = requireFields([
+        ['Username', req.body.username],
+      ]);
+      if (fieldError) throw new Error(fieldError);
+
+      await q.createDatabaseManager({
+        username: req.body.username.trim(),
+        passwordHash,
+      });
+    } else if (selectedRole === 'player') {
+      const fieldError = requireFields([
+        ['Username', req.body.username],
+        ['Name', req.body.name],
+        ['Surname', req.body.surname],
+        ['Nationality', req.body.nationality],
+        ['Date of Birth', req.body.date_of_birth],
+        ['Market Value', req.body.market_value],
+        ['Height', req.body.height_cm],
+      ]);
+      if (fieldError) throw new Error(fieldError);
+
+      await q.createPlayer({
+        username: req.body.username.trim(),
+        passwordHash,
+        name: req.body.name.trim(),
+        surname: req.body.surname.trim(),
+        nationality: req.body.nationality.trim(),
+        dateOfBirth: req.body.date_of_birth,
+        marketValue: req.body.market_value,
+        mainPosition: req.body.main_position,
+        strongFoot: req.body.strong_foot,
+        heightCm: req.body.height_cm,
+      });
+    } else if (selectedRole === 'manager') {
+      const fieldError = requireFields([
+        ['Username', req.body.username],
+        ['Name', req.body.name],
+        ['Surname', req.body.surname],
+        ['Nationality', req.body.nationality],
+        ['Date of Birth', req.body.date_of_birth],
+        ['Preferred Formation', req.body.preferred_formation],
+      ]);
+      if (fieldError) throw new Error(fieldError);
+
+      await q.createManager({
+        username: req.body.username.trim(),
+        passwordHash,
+        name: req.body.name.trim(),
+        surname: req.body.surname.trim(),
+        nationality: req.body.nationality.trim(),
+        dateOfBirth: req.body.date_of_birth,
+        preferredFormation: req.body.preferred_formation.trim(),
+        experienceLevel: req.body.experience_level,
+      });
+    } else if (selectedRole === 'referee') {
+      const fieldError = requireFields([
+        ['Username', req.body.username],
+        ['Name', req.body.name],
+        ['Surname', req.body.surname],
+        ['Nationality', req.body.nationality],
+        ['Date of Birth', req.body.date_of_birth],
+        ['License Level', req.body.license_level],
+        ['Years of Experience', req.body.years_experience],
+      ]);
+      if (fieldError) throw new Error(fieldError);
+
+      await q.createReferee({
+        username: req.body.username.trim(),
+        passwordHash,
+        name: req.body.name.trim(),
+        surname: req.body.surname.trim(),
+        nationality: req.body.nationality.trim(),
+        dateOfBirth: req.body.date_of_birth,
+        licenseLevel: req.body.license_level.trim(),
+        yearsExperience: req.body.years_experience,
+      });
+    } else {
+      throw new Error('Unknown role.');
+    }
+
+    req.session.flash = 'User created successfully.';
+    res.redirect('/db-manager/create-user');
+  } catch (err) {
+    req.session.flash = `Error: ${err.message}`;
+    res.render('db_manager/create_user', { body, selectedRole });
+  }
+});
 
 module.exports = router;

@@ -459,4 +459,115 @@ BEGIN
     END IF;
 END$$
 
+-- A played match must be submitted only after its scheduled kickoff time
+CREATE TRIGGER trg_match_result_timing
+BEFORE UPDATE ON `Match`
+FOR EACH ROW
+BEGIN
+    IF NEW.is_played = TRUE AND OLD.is_played = FALSE
+       AND TIMESTAMP(OLD.match_date, OLD.match_time) > NOW() THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Match result cannot be submitted before the scheduled kickoff time.';
+    END IF;
+END$$
+
+-- A played match must have a complete result payload
+CREATE TRIGGER trg_match_result_completeness
+BEFORE UPDATE ON `Match`
+FOR EACH ROW
+BEGIN
+    IF NEW.is_played = TRUE THEN
+        IF NEW.home_goals IS NULL OR NEW.away_goals IS NULL OR NEW.attendance IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Played matches must include attendance, home goals, and away goals.';
+        END IF;
+    END IF;
+END$$
+
+-- A player may only be added for a club they are actively contracted to
+CREATE TRIGGER trg_match_participation_active_contract
+BEFORE INSERT ON Match_Participation
+FOR EACH ROW
+BEGIN
+    DECLARE active_contracts INT;
+
+    SELECT COUNT(*) INTO active_contracts
+    FROM Contract c
+    WHERE c.player_id = NEW.player_id
+      AND c.club_id = NEW.club_id
+      AND c.start_date <= (
+          SELECT match_date FROM `Match` WHERE match_ID = NEW.match_ID
+      )
+      AND c.end_date >= (
+          SELECT match_date FROM `Match` WHERE match_ID = NEW.match_ID
+      );
+
+    IF active_contracts = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Player must have an active contract with the selected club for that match date.';
+    END IF;
+END$$
+
+-- A loaned player cannot appear for their parent club during the loan period
+CREATE TRIGGER trg_match_participation_loan_parent_block
+BEFORE INSERT ON Match_Participation
+FOR EACH ROW
+BEGIN
+    DECLARE invalid_count INT;
+
+    SELECT COUNT(*) INTO invalid_count
+    FROM Contract parent_c
+    INNER JOIN PermanentContract pc ON pc.contract_id = parent_c.contract_id
+    INNER JOIN LoanContract lc ON lc.parent_permanent_contract_id = pc.contract_id
+    INNER JOIN Contract loan_c ON loan_c.contract_id = lc.contract_id
+    INNER JOIN `Match` m ON m.match_ID = NEW.match_ID
+    WHERE parent_c.player_id = NEW.player_id
+      AND parent_c.club_id = NEW.club_id
+      AND loan_c.player_id = NEW.player_id
+      AND m.match_date BETWEEN loan_c.start_date AND loan_c.end_date;
+
+    IF invalid_count > 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'A loaned player cannot play for their parent club during the loan period.';
+    END IF;
+END$$
+
+-- A match cannot be marked as played unless both clubs have valid squad sizes
+CREATE TRIGGER trg_match_played_requires_full_squads
+BEFORE UPDATE ON `Match`
+FOR EACH ROW
+BEGIN
+    DECLARE home_players INT;
+    DECLARE away_players INT;
+    DECLARE home_starters INT;
+    DECLARE away_starters INT;
+
+    IF NEW.is_played = TRUE AND OLD.is_played = FALSE THEN
+        SELECT COUNT(*), COALESCE(SUM(CASE WHEN is_starter = TRUE THEN 1 ELSE 0 END), 0)
+        INTO home_players, home_starters
+        FROM Match_Participation
+        WHERE match_ID = NEW.match_ID AND club_id = NEW.home_club_ID;
+
+        SELECT COUNT(*), COALESCE(SUM(CASE WHEN is_starter = TRUE THEN 1 ELSE 0 END), 0)
+        INTO away_players, away_starters
+        FROM Match_Participation
+        WHERE match_ID = NEW.match_ID AND club_id = NEW.away_club_ID;
+
+        IF home_players < 11 OR away_players < 11 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Both clubs must have at least 11 squad members before the match can be marked as played.';
+        END IF;
+
+        IF home_players > 23 OR away_players > 23 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'No club may exceed 23 squad members in a played match.';
+        END IF;
+
+        IF home_starters <> 11 OR away_starters <> 11 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Both clubs must have exactly 11 starters before the match can be marked as played.';
+        END IF;
+    END IF;
+END$$
+
 DELIMITER ;
