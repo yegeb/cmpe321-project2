@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>Player Profile - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Player Profile</h1>
+<% if (player) { %>
+<table border="1">
+  <tr><th>Name</th><td><%= player.name %> <%= player.surname %></td></tr>
+  <tr><th>Age</th><td><%= player.age %></td></tr>
+  <tr><th>Nationality</th><td><%= player.nationality %></td></tr>
+  <tr><th>Date of Birth</th><td><%= player.date_of_birth ? String(player.date_of_birth).split('T')[0] : '' %></td></tr>
+  <tr><th>Current Club</th><td><%= player.current_club || 'Free Agent' %></td></tr>
+  <tr><th>Main Position</th><td><%= player.main_position %></td></tr>
+  <tr><th>Strong Foot</th><td><%= player.strong_foot %></td></tr>
+  <tr><th>Height</th><td><%= player.height_cm %> cm</td></tr>
+  <tr><th>Market Value</th><td>€<%= Number(player.market_value).toLocaleString() %></td></tr>
+</table>
+<% } %>
+<h2>Menu</h2>
+<ul>
+  <li><a href="/player/performance">Performance Statistics</a></li>
+  <li><a href="/player/match-history">Match History</a></li>
+  <li><a href="/player/career-history">Career History</a></li>
+</ul>
+</body>
+</html>

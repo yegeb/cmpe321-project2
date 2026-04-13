@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head><title>Login - TransferDB</title></head>
+<body>
+<%- include('partials/flash') %>
+<h1>Login</h1>
+<form method="POST" action="/login">
+  <p>
+    <label>Username: <input type="text" name="username" required></label>
+  </p>
+  <p>
+    <label>Password: <input type="password" name="password" required></label>
+  </p>
+  <p>
+    <label>Role:
+      <select name="role">
+        <option value="player">Player</option>
+        <option value="manager">Manager</option>
+        <option value="referee">Referee</option>
+        <option value="db_manager">Database Manager</option>
+      </select>
+    </label>
+  </p>
+  <p><button type="submit">Login</button></p>
+</form>
+<p>No account? <a href="/register">Register here</a></p>
+</body>
+</html>

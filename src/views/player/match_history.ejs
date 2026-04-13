@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head><title>Match History - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Match History</h1>
+<table border="1">
+  <tr>
+    <th>Date</th><th>Time</th><th>Competition</th><th>Stadium</th><th>Opponent</th>
+    <th>Score</th><th>Result</th>
+    <th>Min</th><th>Pos</th><th>Goals</th><th>Assists</th><th>YC</th><th>RC</th><th>Rating</th>
+  </tr>
+  <% matches.forEach(m => { %>
+  <tr>
+    <td><%= m.match_date ? String(m.match_date).split('T')[0] : '' %></td>
+    <td><%= m.match_time %></td>
+    <td><%= m.competition %></td>
+    <td><%= m.stadium_name %></td>
+    <td><%= m.opponent %></td>
+    <td>
+      <% if (m.is_played) { %><%= m.home_goals %> - <%= m.away_goals %><% } else { %>Scheduled<% } %>
+    </td>
+    <td>
+      <% if (m.is_played) {
+           const myGoals  = (m.club_id === m.home_club_ID) ? m.home_goals : m.away_goals;
+           const oppGoals = (m.club_id === m.home_club_ID) ? m.away_goals : m.home_goals;
+           if (myGoals > oppGoals)        { %>Win<%
+           } else if (myGoals < oppGoals) { %>Loss<%
+           } else                         { %>Draw<% }
+         } else { %>-<% } %>
+    </td>
+    <td><%= m.minutes_played %></td>
+    <td><%= m.position_in_match || '-' %></td>
+    <td><%= m.goals %></td>
+    <td><%= m.assists %></td>
+    <td><%= m.yellow_cards %></td>
+    <td><%= m.red_cards %></td>
+    <td><%= m.rating ?? '-' %></td>
+  </tr>
+  <% }) %>
+</table>
+</body>
+</html>

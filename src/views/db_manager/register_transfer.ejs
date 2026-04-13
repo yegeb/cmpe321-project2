@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head><title>Register Transfer - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Register Transfer &amp; Contract</h1>
+<p>Transfer date and contract start date will be set to today automatically.</p>
+<form method="POST" action="/db-manager/register-transfer">
+  <p>
+    <label>Player:
+      <select name="player_id">
+        <% players.forEach(p => { %>
+        <option value="<%= p.person_ID %>"><%= p.name %> <%= p.surname %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>From Club (leave empty if free agent):
+      <select name="from_club_id">
+        <option value="">-- None (free agent) --</option>
+        <% clubs.forEach(c => { %>
+        <option value="<%= c.club_ID %>"><%= c.club_name %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>To Club:
+      <select name="to_club_id">
+        <% clubs.forEach(c => { %>
+        <option value="<%= c.club_ID %>"><%= c.club_name %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Transfer Type:
+      <select name="transfer_type">
+        <option value="Free">Free</option>
+        <option value="Purchase">Purchase</option>
+        <option value="Loan">Loan</option>
+      </select>
+    </label>
+  </p>
+  <p><label>Transfer Fee (EUR, 0 for free): <input type="number" name="transfer_fee" min="0" step="1" required></label></p>
+  <p>
+    <label>Contract Type:
+      <select name="contract_type">
+        <option value="Permanent">Permanent</option>
+        <option value="Loan">Loan</option>
+      </select>
+    </label>
+  </p>
+  <p><label>Weekly Wage (EUR): <input type="number" name="weekly_wage" min="1" required></label></p>
+  <p><label>Contract End Date: <input type="date" name="end_date" required></label></p>
+  <p><button type="submit">Register</button></p>
+</form>
+</body>
+</html>

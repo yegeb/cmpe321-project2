@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><title>Performance Statistics - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Performance Statistics</h1>
+
+<form method="GET" action="/player/performance">
+  <label>Competition:
+    <select name="competition_id">
+      <option value="">All</option>
+      <% competitions.forEach(c => { %>
+      <option value="<%= c.competition_ID %>" <%= competition_id == c.competition_ID ? 'selected' : '' %>>
+        <%= c.name %> (<%= c.season %>)
+      </option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Season:
+    <select name="season">
+      <option value="">All (Career)</option>
+      <% seasons.forEach(s => { %>
+      <option value="<%= s.season %>" <%= season === s.season ? 'selected' : '' %>><%= s.season %></option>
+      <% }) %>
+    </select>
+  </label>
+  <button type="submit">Filter</button>
+</form>
+
+<h2>View: <%= filterLabel %></h2>
+<% if (stats) { %>
+<table border="1">
+  <tr><th>Games Played</th><th>Goals</th><th>Assists</th><th>Yellow Cards</th><th>Red Cards</th><th>Avg Rating</th></tr>
+  <tr>
+    <td><%= stats.games_played || 0 %></td>
+    <td><%= stats.goals || 0 %></td>
+    <td><%= stats.assists || 0 %></td>
+    <td><%= stats.yellow_cards || 0 %></td>
+    <td><%= stats.red_cards || 0 %></td>
+    <td><%= stats.avg_rating ?? '-' %></td>
+  </tr>
+</table>
+<% } %>
+</body>
+</html>

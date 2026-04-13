@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Referee Dashboard - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Referee Dashboard</h1>
+<% if (referee) { %>
+<table border="1">
+  <tr><th>Name</th><td><%= referee.name %> <%= referee.surname %></td></tr>
+  <tr><th>Age</th><td><%= referee.age %></td></tr>
+  <tr><th>Nationality</th><td><%= referee.nationality %></td></tr>
+  <tr><th>License Level</th><td><%= referee.license_level %></td></tr>
+  <tr><th>Years of Experience</th><td><%= referee.years_experience %></td></tr>
+</table>
+<% } %>
+<h2>Menu</h2>
+<ul>
+  <li><a href="/referee/career-stats">Career Statistics</a></li>
+  <li><a href="/referee/match-history">Match History</a></li>
+</ul>
+</body>
+</html>

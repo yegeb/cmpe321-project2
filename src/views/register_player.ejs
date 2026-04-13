@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head><title>Register Player - TransferDB</title></head>
+<body>
+<%- include('partials/flash') %>
+<h1>Register as Player</h1>
+<form method="POST" action="/register/player">
+  <p><label>Username: <input type="text" name="username" required></label></p>
+  <p><label>Password: <input type="password" name="password" required></label></p>
+  <p><label>Name: <input type="text" name="name" required></label></p>
+  <p><label>Surname: <input type="text" name="surname" required></label></p>
+  <p><label>Nationality: <input type="text" name="nationality" required></label></p>
+  <p><label>Date of Birth (YYYY-MM-DD): <input type="date" name="date_of_birth" required></label></p>
+  <p><label>Market Value (EUR): <input type="number" name="market_value" min="1" required></label></p>
+  <p>
+    <label>Main Position:
+      <select name="main_position">
+        <option value="Goalkeeper">Goalkeeper</option>
+        <option value="Defender">Defender</option>
+        <option value="Midfielder">Midfielder</option>
+        <option value="Forward">Forward</option>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Strong Foot:
+      <select name="strong_foot">
+        <option value="Right">Right</option>
+        <option value="Left">Left</option>
+        <option value="Both">Both</option>
+      </select>
+    </label>
+  </p>
+  <p><label>Height (cm): <input type="number" name="height_cm" min="1" required></label></p>
+  <p><button type="submit">Register</button></p>
+</form>
+<p><a href="/register">Back</a> | <a href="/login">Login</a></p>
+</body>
+</html>

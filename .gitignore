@@ -1,0 +1,24 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Mac OS
+.DS_Store
+.LSOverride
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Python / Virtual Environment
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+
+
+# IDEs and Editors
+.vscode/
+

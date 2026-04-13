@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Stadiums - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>All Stadiums</h1>
+<table border="1">
+  <tr>
+    <th>Name</th><th>City</th><th>Capacity</th><th>Home Club(s)</th>
+  </tr>
+  <% stadiums.forEach(s => { %>
+  <tr>
+    <td><%= s.stadium_name %></td>
+    <td><%= s.city %></td>
+    <td><%= s.capacity %></td>
+    <td><%= s.clubs || '-' %></td>
+  </tr>
+  <% }) %>
+</table>
+<p><a href="/db-manager/rename-stadium">Rename a Stadium</a></p>
+</body>
+</html>

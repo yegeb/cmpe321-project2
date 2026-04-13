@@ -1,0 +1,40 @@
+<hr>
+<nav>
+<% if (!user) { %>
+  <a href="/login">Login</a> |
+  <a href="/register">Register</a>
+<% } else if (user.role === 'db_manager') { %>
+  <strong>DB Manager: <%= user.username %></strong> |
+  <a href="/db-manager">Dashboard</a> |
+  <a href="/db-manager/stadiums">Stadiums</a> |
+  <a href="/db-manager/schedule-match">Schedule Match</a> |
+  <a href="/db-manager/create-competition">New Competition</a> |
+  <a href="/db-manager/assign-manager">Assign Manager</a> |
+  <a href="/db-manager/register-transfer">Register Transfer</a> |
+  <a href="/db-manager/rename-stadium">Rename Stadium</a> |
+  <a href="/db-manager/create-user">Create User</a> |
+  <a href="/logout">Logout</a>
+<% } else if (user.role === 'manager') { %>
+  <strong>Manager: <%= user.name %> <%= user.surname %></strong> |
+  <a href="/manager">Dashboard</a> |
+  <a href="/manager/fixtures">Fixtures</a> |
+  <a href="/manager/standings">Standings</a> |
+  <a href="/manager/squad-stats">Squad Stats</a> |
+  <a href="/manager/leaderboards">Leaderboards</a> |
+  <a href="/logout">Logout</a>
+<% } else if (user.role === 'player') { %>
+  <strong>Player: <%= user.name %> <%= user.surname %></strong> |
+  <a href="/player">Profile</a> |
+  <a href="/player/performance">Performance</a> |
+  <a href="/player/match-history">Match History</a> |
+  <a href="/player/career-history">Career History</a> |
+  <a href="/logout">Logout</a>
+<% } else if (user.role === 'referee') { %>
+  <strong>Referee: <%= user.name %> <%= user.surname %></strong> |
+  <a href="/referee">Dashboard</a> |
+  <a href="/referee/career-stats">Career Stats</a> |
+  <a href="/referee/match-history">Match History</a> |
+  <a href="/logout">Logout</a>
+<% } %>
+</nav>
+<hr>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head><title>Manager Dashboard - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Manager Dashboard</h1>
+<% if (manager) { %>
+<table border="1">
+  <tr><th>Name</th><td><%= manager.name %> <%= manager.surname %></td></tr>
+  <tr><th>Age</th><td><%= manager.age %></td></tr>
+  <tr><th>Nationality</th><td><%= manager.nationality %></td></tr>
+  <tr><th>Current Club</th><td><%= club ? club.club_name : 'Not assigned' %></td></tr>
+  <tr><th>Formation</th><td><%= manager.preferred_formation %></td></tr>
+  <tr><th>Experience</th><td><%= manager.experience_level %></td></tr>
+</table>
+<% } %>
+<h2>Menu</h2>
+<ul>
+  <li><a href="/manager/fixtures">Fixtures &amp; Results</a></li>
+  <li><a href="/manager/standings">League Standings</a></li>
+  <li><a href="/manager/squad-stats">Squad Statistics</a></li>
+  <li><a href="/manager/leaderboards">Competition Leaderboards</a></li>
+</ul>
+</body>
+</html>
