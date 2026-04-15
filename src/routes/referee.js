@@ -69,6 +69,16 @@ router.post('/submit-result/:matchId', guard, async (req, res) => {
     .filter(s => clubOf[s.playerId] === match.away_club_ID)
     .reduce((sum, s) => sum + parseInt(s.goals, 10), 0);
 
+  // Per-player: no single player can score more than their team's total
+  for (const s of playerStats) {
+    const g = parseInt(s.goals, 10);
+    const teamMax = clubOf[s.playerId] === match.home_club_ID ? homeGoals : awayGoals;
+    if (g > teamMax) {
+      req.session.flash = `Invalid stats: a player cannot score more goals (${g}) than their team scored (${teamMax}).`;
+      return res.redirect(`/referee/submit-result/${matchId}`);
+    }
+  }
+
   if (homePlayerGoals !== homeGoals) {
     req.session.flash = `Goal mismatch: score shows ${homeGoals} home goal(s) but player stats total ${homePlayerGoals}.`;
     return res.redirect(`/referee/submit-result/${matchId}`);
