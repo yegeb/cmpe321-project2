@@ -32,7 +32,7 @@ router.post('/login', async (req, res) => {
   const { username, password, role } = req.body;
 
   if (!username || !password || !role) {
-    req.session.flash = 'Please fill in all fields.';
+    res.locals.flash = 'Please fill in all fields.';
     return res.render('login');
   }
 
@@ -51,7 +51,7 @@ router.post('/login', async (req, res) => {
     } else {
       const tableMap = { player: 'Player', manager: 'Manager', referee: 'Referee' };
       if (!tableMap[role]) {
-        req.session.flash = 'Unknown role.';
+        res.locals.flash = 'Unknown role.';
         return res.render('login');
       }
       const row = await db.queryOne(
@@ -70,10 +70,10 @@ router.post('/login', async (req, res) => {
       }
     }
 
-    req.session.flash = 'Invalid username or password.';
+    res.locals.flash = 'Invalid username or password.';
     res.render('login');
   } catch (err) {
-    req.session.flash = `DB error: ${err.message}`;
+    res.locals.flash = `DB error: ${err.message}`;
     res.render('login');
   }
 });
