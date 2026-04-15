@@ -110,7 +110,7 @@ async function getStadiums() {
 
 async function getStadiumList() {
   return db.query(
-    `SELECT stadium_ID, stadium_name
+    `SELECT stadium_ID, stadium_name, city
      FROM Stadium
      ORDER BY stadium_name`
   );
@@ -213,6 +213,23 @@ async function getCurrentAssignments() {
 }
 
 async function assignManager({ managerId, clubId, startDate }) {
+  // Close any existing active assignment for this manager with a different club
+  await db.execute(
+    `UPDATE Leads
+     SET end_date = ?
+     WHERE manager_ID = ? AND end_date IS NULL`,
+    [startDate, managerId]
+  );
+
+  // Close any existing active assignment for this club with a different manager
+  await db.execute(
+    `UPDATE Leads
+     SET end_date = ?
+     WHERE club_ID = ? AND end_date IS NULL`,
+    [startDate, clubId]
+  );
+
+  // Insert new assignment
   return db.execute(
     `INSERT INTO Leads (club_ID, manager_ID, start_date, end_date)
      VALUES (?, ?, ?, NULL)`,

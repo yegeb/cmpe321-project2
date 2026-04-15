@@ -29,7 +29,7 @@ async function getCareerStats(refereeId) {
        FROM Match_Participation mp
        GROUP BY mp.match_ID
      ) cards ON cards.match_ID = m.match_ID
-     WHERE m.referee_ID = ?`,
+     WHERE m.referee_ID = ? AND m.is_played = TRUE`,
     [refereeId]
   );
 }
@@ -41,8 +41,8 @@ async function getMatchHistory(refereeId) {
             m.home_goals, m.away_goals,
             comp.name AS competition, s.stadium_name,
             hc.club_name AS home_club, ac.club_name AS away_club,
-            COALESCE(SUM(mp.yellow_cards), 0) AS match_yellows,
-            COALESCE(SUM(mp.red_cards), 0) AS match_reds
+            COALESCE(SUM(CASE WHEN m.is_played THEN mp.yellow_cards ELSE 0 END), 0) AS match_yellows,
+            COALESCE(SUM(CASE WHEN m.is_played THEN mp.red_cards ELSE 0 END), 0) AS match_reds
      FROM \`Match\` m
      INNER JOIN Competition comp ON comp.competition_ID = m.competition_ID
      INNER JOIN Stadium s ON s.stadium_ID = m.stadium_ID

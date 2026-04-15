@@ -178,6 +178,8 @@ router.post('/create-user', guard, async (req, res) => {
         ['Nationality', req.body.nationality],
         ['Date of Birth', req.body.date_of_birth],
         ['Market Value', req.body.market_value],
+        ['Main Position', req.body.main_position],
+        ['Strong Foot', req.body.strong_foot],
         ['Height', req.body.height_cm],
       ]);
       if (fieldError) throw new Error(fieldError);
@@ -202,6 +204,7 @@ router.post('/create-user', guard, async (req, res) => {
         ['Nationality', req.body.nationality],
         ['Date of Birth', req.body.date_of_birth],
         ['Preferred Formation', req.body.preferred_formation],
+        ['Experience Level', req.body.experience_level],
       ]);
       if (fieldError) throw new Error(fieldError);
 

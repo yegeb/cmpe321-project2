@@ -26,7 +26,10 @@ router.get('/submit-result/:matchId', guard, async (req, res) => {
     req.session.flash = 'Match not found or you are not the assigned referee.';
     return res.redirect('/referee/match-history');
   }
-  const matchDt = new Date(`${match.match_date.toISOString().split('T')[0]}T${match.match_time}`);
+  const dateStr = typeof match.match_date === 'string'
+    ? match.match_date
+    : match.match_date.toISOString().split('T')[0];
+  const matchDt = new Date(`${dateStr}T${match.match_time}`);
   if (matchDt > new Date()) {
     req.session.flash = 'Cannot submit result: match has not yet taken place.';
     return res.redirect('/referee/match-history');

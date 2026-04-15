@@ -10,7 +10,7 @@
     <label>Stadium:
       <select name="stadium_id">
         <% stadiums.forEach(s => { %>
-        <option value="<%= s.stadium_ID %>"><%= s.stadium_name %></option>
+        <option value="<%= s.stadium_ID %>"><%= s.stadium_name %><% if (s.city) { %> (<%= s.city %>)<% } %></option>
         <% }) %>
       </select>
     </label>
