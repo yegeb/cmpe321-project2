@@ -62,6 +62,7 @@ async function getMatchForReferee(matchId, refereeId) {
   return db.queryOne(
     `SELECT m.match_ID, m.match_date, m.match_time, m.is_played,
             m.home_goals, m.away_goals, m.attendance,
+            m.home_club_ID, m.away_club_ID,
             hc.club_name AS home_club, ac.club_name AS away_club,
             s.capacity AS stadium_capacity
      FROM \`Match\` m

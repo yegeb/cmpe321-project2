@@ -55,6 +55,29 @@ router.post('/submit-result/:matchId', guard, async (req, res) => {
     rating:       req.body[`rating_${p.player_id}`]   || null,
   }));
 
+  // Build a lookup of player_id → club_id from the fetched participants
+  const clubOf = {};
+  for (const p of participants) clubOf[p.player_id] = p.club_id;
+
+  const homeGoals = parseInt(req.body.home_goals, 10);
+  const awayGoals = parseInt(req.body.away_goals, 10);
+
+  const homePlayerGoals = playerStats
+    .filter(s => clubOf[s.playerId] === match.home_club_ID)
+    .reduce((sum, s) => sum + parseInt(s.goals, 10), 0);
+  const awayPlayerGoals = playerStats
+    .filter(s => clubOf[s.playerId] === match.away_club_ID)
+    .reduce((sum, s) => sum + parseInt(s.goals, 10), 0);
+
+  if (homePlayerGoals !== homeGoals) {
+    req.session.flash = `Goal mismatch: score shows ${homeGoals} home goal(s) but player stats total ${homePlayerGoals}.`;
+    return res.redirect(`/referee/submit-result/${matchId}`);
+  }
+  if (awayPlayerGoals !== awayGoals) {
+    req.session.flash = `Goal mismatch: score shows ${awayGoals} away goal(s) but player stats total ${awayPlayerGoals}.`;
+    return res.redirect(`/referee/submit-result/${matchId}`);
+  }
+
   try {
     await q.submitResult({
       matchId,
