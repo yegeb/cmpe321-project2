@@ -38,18 +38,18 @@
   <p>
     <label>Transfer Type:
       <select name="transfer_type">
-        <option value="Free">Free</option>
-        <option value="Purchase">Purchase</option>
-        <option value="Loan">Loan</option>
+        <option value="Free">Free (fee = 0, contract must be Permanent)</option>
+        <option value="Purchase">Purchase (fee &gt; 0, contract must be Permanent)</option>
+        <option value="Loan">Loan (fee &gt; 0, contract must be Loan)</option>
       </select>
     </label>
   </p>
-  <p><label>Transfer Fee (EUR, 0 for free): <input type="number" name="transfer_fee" min="0" step="1" required></label></p>
+  <p><label>Transfer Fee (EUR, 0 for Free transfers): <input type="number" name="transfer_fee" min="0" step="1" required></label></p>
   <p>
     <label>Contract Type:
       <select name="contract_type">
-        <option value="Permanent">Permanent</option>
-        <option value="Loan">Loan</option>
+        <option value="Permanent">Permanent (for Free / Purchase transfers)</option>
+        <option value="Loan">Loan (for Loan transfers only)</option>
       </select>
     </label>
   </p>

@@ -20,6 +20,7 @@ function validatePassword(plain) {
   return null;
 }
 
+
 function requireFields(values) {
   for (const [label, value] of values) {
     if (value === undefined || value === null || String(value).trim() === '') {
@@ -125,6 +126,12 @@ router.get('/register-transfer', guard, async (req, res) => {
   res.render('db_manager/register_transfer', { players, clubs });
 });
 router.post('/register-transfer', guard, async (req, res) => {
+  const today = new Date().toISOString().split('T')[0];
+  if (req.body.end_date <= today) {
+    req.session.flash = 'Contract end date must be in the future (transfer date is always set to today).';
+    return res.redirect('/db-manager/register-transfer');
+  }
+
   try {
     await q.registerTransfer({
       playerId:      req.body.player_id,

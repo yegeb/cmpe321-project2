@@ -173,12 +173,7 @@ CREATE TABLE TransferRecord (
     FOREIGN KEY (player_id)    REFERENCES Player(person_ID),
     FOREIGN KEY (from_club_id) REFERENCES Club(club_ID),
     FOREIGN KEY (to_club_id)   REFERENCES Club(club_ID),
-    CHECK (transfer_fee >= 0),
-    CHECK (
-        (transfer_type = 'Free'                    AND transfer_fee = 0)
-        OR
-        (transfer_type IN ('Purchase','Loan') AND transfer_fee > 0)
-    )
+    CHECK (transfer_fee >= 0)
 );
 
 -- ============================================================
@@ -396,6 +391,58 @@ BEGIN
     IF active_count > 0 THEN
         SIGNAL SQLSTATE '45000'
         SET MESSAGE_TEXT = 'This club already has an active manager. Close the previous assignment first.';
+    END IF;
+END$$
+
+-- Transfer fee must be 0 for Free transfers and > 0 for Purchase/Loan transfers
+CREATE TRIGGER trg_transfer_fee_type_check
+BEFORE INSERT ON TransferRecord
+FOR EACH ROW
+BEGIN
+    IF NEW.transfer_type = 'Free' AND NEW.transfer_fee <> 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Free transfers must have a fee of 0.';
+    END IF;
+    IF NEW.transfer_type IN ('Purchase', 'Loan') AND NEW.transfer_fee <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Purchase and Loan transfers must have a fee greater than 0.';
+    END IF;
+END$$
+
+-- Contract end date must be after start date
+CREATE TRIGGER trg_contract_date_check
+BEFORE INSERT ON Contract
+FOR EACH ROW
+BEGIN
+    IF NEW.end_date <= NEW.start_date THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Contract end date must be after the start date.';
+    END IF;
+END$$
+
+-- Contract type must match the transfer type registered today for this player
+CREATE TRIGGER trg_contract_transfer_type_match
+BEFORE INSERT ON Contract
+FOR EACH ROW
+BEGIN
+    DECLARE latest_transfer_type VARCHAR(20);
+    SELECT transfer_type INTO latest_transfer_type
+    FROM TransferRecord
+    WHERE player_id  = NEW.player_id
+      AND to_club_id = NEW.club_id
+      AND transfer_date = CURDATE()
+    ORDER BY transfer_id DESC
+    LIMIT 1;
+
+    IF latest_transfer_type IS NOT NULL THEN
+        IF latest_transfer_type = 'Loan' AND NEW.contract_type <> 'Loan' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'A Loan transfer requires a Loan contract.';
+        END IF;
+        IF latest_transfer_type IN ('Free', 'Purchase') AND NEW.contract_type <> 'Permanent' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'A Free or Purchase transfer requires a Permanent contract.';
+        END IF;
     END IF;
 END$$
 
