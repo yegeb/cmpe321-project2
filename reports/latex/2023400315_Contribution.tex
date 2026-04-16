@@ -1,63 +1,67 @@
-\documentclass[12pt, a4paper]{article}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage{mathptmx} % Times New Roman
-\usepackage{setspace} % For 1.5 spacing
-\usepackage[margin=1in]{geometry}
-\usepackage{hyperref}
-
-\onehalfspacing % Enforce 1.5 line spacing
-
-\begin{document}
-
-\begin{center}
-    \Large\textbf{Individual Contribution Report} \\
+    \documentclass[12pt, a4paper]{article}
+    \usepackage[utf8]{inputenc}
+    \usepackage[T1]{fontenc}
+    \usepackage{mathptmx} % Times New Roman
+    \usepackage{setspace} % For 1.5 spacing
+    \usepackage[margin=1in]{geometry}
+    \usepackage{hyperref}
+    
+    \onehalfspacing % Enforce 1.5 line spacing
+    
+    \begin{document}
+    
+    \begin{center}
+        \Large\textbf{Individual Contribution Report} \\
+        \vspace{0.5cm}
+        \normalsize
+        \textbf{Name:} Yüksel Ege Boyacı \\
+        \textbf{Student ID:} 2023400315 \\
+        \textbf{Group Number:} \#31
+    \end{center}
+    
     \vspace{0.5cm}
-    \normalsize
-    \textbf{Name:} Yüksel Ege Boyacı \\
-    \textbf{Student ID:} 2023400315 \\
-    \textbf{Group Number:} \#31
-\end{center}
-
-\vspace{0.5cm}
-
-\section*{Tasks \& Contributions}
-
-For this implementation project, I served as the primary backend and frontend architect, responsible for the web framework setup, user interface panels, and SQL query implementation for two major user roles. My contributions span infrastructure, database queries, and comprehensive testing and refinement.
-
-I established the entire Express.js backend architecture, including routing structure, middleware setup (session management, authentication guards), database connection layer, and error handling. This foundational infrastructure was essential for all subsequent features developed by both team members.
-
-I designed and implemented web interface panels for all four user roles: Database Manager, Manager, Player, and Referee. Each panel required careful translation of the specification's requirements into interactive forms and views with appropriate field validation and role-based access controls.
-
-
-I authored all SQL queries for Manager and Player roles, implementing complex aggregations (league standings, leaderboards, squad statistics) and filtering logic directly in SQL.
-
-\subsection*{Testing \& Refinement}
-I conducted comprehensive edge-case testing of my partner Tuğçe's Database Manager and Referee functionality, including boundary condition validation (stadium 120-minute conflicts, contract limits, player-loan rules). I designed and implemented MySQL triggers (\texttt{trg\_match\_result\_goal\_consistency}, \texttt{trg\_match\_participation\_player\_goal\_max}) to enforce goal consistency constraints at the database level per specification. I corrected several UI and backend inconsistencies through panel fixes and query refinement.
-
-\section*{Collaboration \& Challenges}
-
-Tuğçe and I maintained regular synchronization points to ensure our separate role implementations aligned correctly. We used the specification document and the provided role distribution guide to coordinate responsibilities and prevent overlap.
-
-The primary challenge was reconciling the complexity of SQL query construction (especially for aggregate statistics like league standings and leaderboards) with the need to enforce all business logic at the database level via triggers and constraints. Additionally, managing the interaction between backend validation and database-level enforcement required careful coordination to avoid redundant checks while ensuring data integrity if the database were accessed directly.
-
-Another significant challenge was designing the transfer and contract system correctly: understanding when to apply automatic contract termination, validating the Loan/Permanent linkage, and ensuring these complex multi-step operations couldn't result in inconsistent states. This required close coordination between SQL queries and database trigger design.
-
-\section*{Self-Assessment}
-
-My primary strength in this project was rapid backend development and translating complex business requirements into working web interfaces and SQL queries. I gained significant insight into the importance of separating concerns between application validation and database-level enforcement—something the specification emphasized heavily.
-
-A key area of growth was understanding how to design queries that work correctly with MySQL's aggregation functions and GROUP BY semantics, particularly for computing league standings with multiple sorting criteria. I also learned the value of comprehensive edge-case testing before declaring a feature complete.
-
-\section*{Use of AI Tools}
-
-I used Claude AI extensively for non-SQL tasks to preserve development velocity:
-\begin{itemize}
-    \item \textbf{Backend Setup:} AI assisted with Express.js routing boilerplate, middleware patterns, and session management configuration.
-    \item \textbf{UI/Frontend:} AI helped generate HTML forms, CSS styling, and EJS template structure for the user-facing panels.
-    \item \textbf{Documentation:} AI aided in writing clear error messages and user-facing descriptions.
-\end{itemize}
-
-Critically, \textbf{all SQL queries and database-related work (triggers, constraints, procedural logic) were authored independently by me}. I did not use AI to generate or validate SQL code, as I needed to maintain full understanding and ownership of the database implementation. AI was strictly a tool for accelerating non-critical frontend and infrastructure work, allowing me to focus my effort where database correctness was non-negotiable.
-
-\end{document}
+    
+    \section*{Tasks \& Contributions}
+    
+    In this project, I focused on setting up the web framework, building simple UIs , and implementing SQL queries for two main user roles. My work mainly involved system setup, database operations, and testing and improving the application.
+    
+    I set up the Express.js backend, including the routing structure, middleware (such as session handling and authentication), database connection, and error handling. This provided a stable base for the application.
+    
+    I also designed and built user interface panels for four roles: Database Manager, Manager, Player, and Referee. For each role, I created forms and pages based on the requirements, added input validation, and ensured proper role-based access control.
+    
+    In addition, I wrote all SQL queries for the Manager and Player roles. These included more complex queries such as league standings, leaderboards, and team statistics, using SQL aggregations and filtering which are some of the main tasks for the project.
+    
+    \subsection*{Testing \& Refinement}
+    
+    I conducted comprehensive edge-case testing of my partner Tuğçe's Database Manager and Referee functionality, including boundary condition validation (stadium 120-minute conflicts, contract limits, player-loan rules). I designed and implemented MySQL triggers to enforce goal consistency constraints at the database level per specification. I corrected several UI and backend inconsistencies through panel fixes and query refinement.
+    
+    \section*{Collaboration \& Challenges}
+    
+    Tuğçe and I regularly stayed in sync to make sure our parts of the system worked well together. We followed the specification document and the role distribution guide to divide the work clearly and avoid overlapping responsibilities.
+    
+    One of the main challenges was writing complex SQL queries, especially for features like league standings and leaderboards that require aggregations. At the same time, we had to enforce business rules at the database level using triggers and constraints. 
+    
+    Another major challenge was implementing the transfer and contract system correctly. We needed to handle cases like automatic contract termination, validate the relationship between Loan and Permanent transfers, and make sure these multi-step operations didn’t create inconsistent data. This required coordination between our SQL queries and the database triggers.
+    
+    \section*{Self-Assessment}
+    
+    My main strength in this project was developing the backend quickly and turning complex requirements into working web interfaces and SQL queries. I also learned how important it is to separate responsibilities between the application layer (backend validation) and the database layer (constraints and triggers), which was strongly emphasized in the specification.
+    
+    One area where I improved a lot was writing SQL queries that work correctly with MySQL’s aggregation functions and GROUP BY, especially for cases like league standings where multiple sorting rules are needed. I also learned the importance of testing edge cases carefully before considering a feature complete.
+    
+    \section*{Use of AI Tools}
+    
+    I used Claude AI mainly for non-SQL tasks to speed up development:
+    
+    \begin{itemize}
+        \item \textbf{Backend Setup:} It helped with basic Express.js setup, such as routing boilerplate, middleware structure, and session management configuration.
+        
+        \item \textbf{UI / Frontend:} It assisted in creating HTML forms, CSS styling, and EJS templates for the user panels.
+        
+        \item \textbf{Documentation:} It helped me write clear error messages and user-facing texts.
+    \end{itemize}
+    
+    However, \textbf{all SQL queries and database-related work (such as triggers, constraints, and procedural logic) were written entirely by me}. I did not use AI for SQL, because I wanted to fully understand and control the database implementation. I only used AI to speed up less critical parts like frontend and general backend setup, so I could focus more on ensuring the correctness of the database logic.
+    
+    \end{document}
+    
