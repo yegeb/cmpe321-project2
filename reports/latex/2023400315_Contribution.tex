@@ -23,19 +23,31 @@
 
 \section*{Tasks \& Contributions}
 
-I served as the primary backend and frontend architect. I established the entire Express.js infrastructure (routing, middleware, authentication, database layer), designed and implemented user interface panels for all four roles (Database Manager, Manager, Player, Referee), and authored all SQL queries for Manager and Player roles.
+For this implementation project, I served as the primary backend and frontend architect, responsible for the web framework setup, user interface panels, and SQL query implementation for two major user roles. My contributions span infrastructure, database queries, and comprehensive testing and refinement.
 
-\textbf{Manager role:} League standings queries (3 points/win, 1 point/draw), squad statistics, competition leaderboards (top scorers, assists, ratings). \textbf{Player role:} Career aggregation, seasonal/competition filtering, match history, transfer/contract records.
+I established the entire Express.js backend architecture, including routing structure, middleware setup (session management, authentication guards), database connection layer, and error handling. This foundational infrastructure was essential for all subsequent features developed by both team members.
 
-I conducted comprehensive edge-case testing of my partner Tuğçe's Database Manager and Referee features (stadium conflicts, contract limits, loan parent validation), discovering and fixing several UI and backend inconsistencies. I identified and resolved a critical constraint that was only enforced in the backend: goal consistency for match results (player goal totals must sum to team score). Following the specification's strict enforcement rule, I moved this validation to a MySQL trigger (\texttt{trg\_match\_result\_goal\_consistency}) to ensure the database itself protects integrity regardless of how data is inserted.
+I designed and implemented web interface panels for all four user roles: Database Manager, Manager, Player, and Referee. Each panel required careful translation of the specification's requirements into interactive forms and views with appropriate field validation and role-based access controls.
+
+
+I authored all SQL queries for Manager and Player roles, implementing complex aggregations (league standings, leaderboards, squad statistics) and filtering logic directly in SQL.
+
+\subsection*{Testing \& Refinement}
+I conducted comprehensive edge-case testing of my partner Tuğçe's Database Manager and Referee functionality, including boundary condition validation (stadium 120-minute conflicts, contract limits, player-loan rules). This uncovered critical constraints that were only enforced in the backend (goal consistency validation). I moved these to MySQL triggers (\texttt{trg\_match\_result\_goal\_consistency}, \texttt{trg\_match\_participation\_player\_goal\_max}) to enforce at the database level per specification. I also corrected several UI and backend inconsistencies through panel fixes and query refinement.
 
 \section*{Collaboration \& Challenges}
 
-Tuğçe and I synchronized regularly using the specification and role distribution guide. The primary challenge was balancing SQL query complexity (aggregates for standings/leaderboards) with strict database-level constraint enforcement (triggers, checks). Managing the interaction between backend and database validation required careful coordination to avoid redundancy while ensuring integrity if accessed directly. The transfer/contract system required careful design to handle automatic termination, Loan/Permanent linkage validation, and prevent inconsistent multi-step states.
+Tuğçe and I maintained regular synchronization points to ensure our separate role implementations aligned correctly. We used the specification document and the provided role distribution guide to coordinate responsibilities and prevent overlap.
+
+The primary challenge was reconciling the complexity of SQL query construction (especially for aggregate statistics like league standings and leaderboards) with the need to enforce all business logic at the database level via triggers and constraints. Additionally, managing the interaction between backend validation and database-level enforcement required careful coordination to avoid redundant checks while ensuring data integrity if the database were accessed directly.
+
+Another significant challenge was designing the transfer and contract system correctly: understanding when to apply automatic contract termination, validating the Loan/Permanent linkage, and ensuring these complex multi-step operations couldn't result in inconsistent states. This required close coordination between SQL queries and database trigger design.
 
 \section*{Self-Assessment}
 
-My strength was rapid backend/frontend development and translating business requirements into working interfaces and SQL. I gained insight into separating application validation from database-level enforcement—key to the specification. Growth areas: mastering MySQL aggregation and GROUP BY for multi-criteria sorting (league standings), and recognizing the value of early edge-case testing. Team dynamics: I could have surfaced integration challenges earlier rather than waiting for late-stage testing.
+My primary strength in this project was rapid backend development and translating complex business requirements into working web interfaces and SQL queries. I gained significant insight into the importance of separating concerns between application validation and database-level enforcement—something the specification emphasized heavily.
+
+A key area of growth was understanding how to design queries that work correctly with MySQL's aggregation functions and GROUP BY semantics, particularly for computing league standings with multiple sorting criteria. I also learned the value of comprehensive edge-case testing before declaring a feature complete.
 
 \section*{Use of AI Tools}
 
