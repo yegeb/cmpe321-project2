@@ -566,6 +566,28 @@ BEGIN
     END IF;
 END$$
 
+-- No single player can score more than their team's total goals
+CREATE TRIGGER trg_match_participation_player_goal_max
+BEFORE INSERT ON Match_Participation
+FOR EACH ROW
+BEGIN
+    DECLARE team_goals INT;
+    DECLARE is_home INT;
+
+    -- Determine if this player's club is home or away
+    SELECT CASE WHEN home_club_ID = NEW.club_id THEN 1 ELSE 0 END,
+           CASE WHEN home_club_ID = NEW.club_id THEN home_goals ELSE away_goals END
+    INTO is_home, team_goals
+    FROM `Match`
+    WHERE match_ID = NEW.match_ID;
+
+    -- Validate: player cannot score more than team total
+    IF NEW.goals > team_goals THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'A player cannot score more goals than their team scored.';
+    END IF;
+END$$
+
 -- A player may only be added for a club they are actively contracted to
 CREATE TRIGGER trg_match_participation_active_contract
 BEFORE INSERT ON Match_Participation
