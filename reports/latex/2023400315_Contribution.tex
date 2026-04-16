@@ -33,7 +33,7 @@ I designed and implemented web interface panels for all four user roles: Databas
 I authored all SQL queries for Manager and Player roles, implementing complex aggregations (league standings, leaderboards, squad statistics) and filtering logic directly in SQL.
 
 \subsection*{Testing \& Refinement}
-I conducted comprehensive edge-case testing of my partner Tuğçe's Database Manager and Referee functionality, including boundary condition validation (stadium 120-minute conflicts, contract limits, player-loan rules). This uncovered critical constraints that were only enforced in the backend (goal consistency validation). I moved these to MySQL triggers (\texttt{trg\_match\_result\_goal\_consistency}, \texttt{trg\_match\_participation\_player\_goal\_max}) to enforce at the database level per specification. I also corrected several UI and backend inconsistencies through panel fixes and query refinement.
+I conducted comprehensive edge-case testing of my partner Tuğçe's Database Manager and Referee functionality, including boundary condition validation (stadium 120-minute conflicts, contract limits, player-loan rules). I designed and implemented MySQL triggers (\texttt{trg\_match\_result\_goal\_consistency}, \texttt{trg\_match\_participation\_player\_goal\_max}) to enforce goal consistency constraints at the database level per specification. I corrected several UI and backend inconsistencies through panel fixes and query refinement.
 
 \section*{Collaboration \& Challenges}
 
