@@ -531,6 +531,41 @@ BEGIN
     END IF;
 END$$
 
+-- Player goal totals must match reported team scores
+CREATE TRIGGER trg_match_result_goal_consistency
+BEFORE UPDATE ON `Match`
+FOR EACH ROW
+BEGIN
+    DECLARE home_player_goals INT;
+    DECLARE away_player_goals INT;
+
+    IF NEW.is_played = TRUE AND OLD.is_played = FALSE THEN
+        -- Sum player goals for home club
+        SELECT COALESCE(SUM(goals), 0) INTO home_player_goals
+        FROM Match_Participation
+        WHERE match_ID = NEW.match_ID
+          AND club_id = NEW.home_club_ID;
+
+        -- Sum player goals for away club
+        SELECT COALESCE(SUM(goals), 0) INTO away_player_goals
+        FROM Match_Participation
+        WHERE match_ID = NEW.match_ID
+          AND club_id = NEW.away_club_ID;
+
+        -- Validate home team goal consistency
+        IF home_player_goals <> NEW.home_goals THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Goal mismatch: home team player goals do not sum to reported score.';
+        END IF;
+
+        -- Validate away team goal consistency
+        IF away_player_goals <> NEW.away_goals THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Goal mismatch: away team player goals do not sum to reported score.';
+        END IF;
+    END IF;
+END$$
+
 -- A player may only be added for a club they are actively contracted to
 CREATE TRIGGER trg_match_participation_active_contract
 BEFORE INSERT ON Match_Participation

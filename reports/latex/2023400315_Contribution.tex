@@ -1,0 +1,51 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx} % Times New Roman
+\usepackage{setspace} % For 1.5 spacing
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+
+\onehalfspacing % Enforce 1.5 line spacing
+
+\begin{document}
+
+\begin{center}
+    \Large\textbf{Individual Contribution Report} \\
+    \vspace{0.5cm}
+    \normalsize
+    \textbf{Name:} Yüksel Ege Boyacı \\
+    \textbf{Student ID:} 2023400315 \\
+    \textbf{Group Number:} \#31
+\end{center}
+
+\vspace{0.5cm}
+
+\section*{Tasks \& Contributions}
+
+I served as the primary backend and frontend architect. I established the entire Express.js infrastructure (routing, middleware, authentication, database layer), designed and implemented user interface panels for all four roles (Database Manager, Manager, Player, Referee), and authored all SQL queries for Manager and Player roles.
+
+\textbf{Manager role:} League standings queries (3 points/win, 1 point/draw), squad statistics, competition leaderboards (top scorers, assists, ratings). \textbf{Player role:} Career aggregation, seasonal/competition filtering, match history, transfer/contract records.
+
+I conducted comprehensive edge-case testing of my partner Tuğçe's Database Manager and Referee features (stadium conflicts, contract limits, loan parent validation), discovering and fixing several UI and backend inconsistencies. I identified and resolved a critical constraint that was only enforced in the backend: goal consistency for match results (player goal totals must sum to team score). Following the specification's strict enforcement rule, I moved this validation to a MySQL trigger (\texttt{trg\_match\_result\_goal\_consistency}) to ensure the database itself protects integrity regardless of how data is inserted.
+
+\section*{Collaboration \& Challenges}
+
+Tuğçe and I synchronized regularly using the specification and role distribution guide. The primary challenge was balancing SQL query complexity (aggregates for standings/leaderboards) with strict database-level constraint enforcement (triggers, checks). Managing the interaction between backend and database validation required careful coordination to avoid redundancy while ensuring integrity if accessed directly. The transfer/contract system required careful design to handle automatic termination, Loan/Permanent linkage validation, and prevent inconsistent multi-step states.
+
+\section*{Self-Assessment}
+
+My strength was rapid backend/frontend development and translating business requirements into working interfaces and SQL. I gained insight into separating application validation from database-level enforcement—key to the specification. Growth areas: mastering MySQL aggregation and GROUP BY for multi-criteria sorting (league standings), and recognizing the value of early edge-case testing. Team dynamics: I could have surfaced integration challenges earlier rather than waiting for late-stage testing.
+
+\section*{Use of AI Tools}
+
+I used Claude AI extensively for non-SQL tasks to preserve development velocity:
+\begin{itemize}
+    \item \textbf{Backend Setup:} AI assisted with Express.js routing boilerplate, middleware patterns, and session management configuration.
+    \item \textbf{UI/Frontend:} AI helped generate HTML forms, CSS styling, and EJS template structure for the user-facing panels.
+    \item \textbf{Documentation:} AI aided in writing clear error messages and user-facing descriptions.
+\end{itemize}
+
+Critically, \textbf{all SQL queries and database-related work (triggers, constraints, procedural logic) were authored independently by me}. I did not use AI to generate or validate SQL code, as I needed to maintain full understanding and ownership of the database implementation. AI was strictly a tool for accelerating non-critical frontend and infrastructure work, allowing me to focus my effort where database correctness was non-negotiable.
+
+\end{document}
