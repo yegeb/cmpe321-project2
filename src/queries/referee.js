@@ -89,13 +89,13 @@ async function getMatchParticipants(matchId) {
 }
 
 async function submitResult({ matchId, homeGoals, awayGoals, attendance, playerStats }) {
+  // Step 1: Set team scores (without marking played) so per-player trigger can validate
   await db.execute(
-    `UPDATE \`Match\`
-     SET home_goals = ?, away_goals = ?, attendance = ?, is_played = TRUE
-     WHERE match_ID = ?`,
+    `UPDATE \`Match\` SET home_goals = ?, away_goals = ?, attendance = ? WHERE match_ID = ?`,
     [homeGoals, awayGoals, attendance, matchId]
   );
 
+  // Step 2: Update individual player stats (BEFORE UPDATE trigger checks player goals <= team goals)
   for (const stat of playerStats) {
     await db.execute(
       `UPDATE Match_Participation
@@ -115,6 +115,12 @@ async function submitResult({ matchId, homeGoals, awayGoals, attendance, playerS
       ]
     );
   }
+
+  // Step 3: Mark as played (trg_match_result_goal_consistency validates sum now)
+  await db.execute(
+    `UPDATE \`Match\` SET is_played = TRUE WHERE match_ID = ?`,
+    [matchId]
+  );
 }
 
 module.exports = {
