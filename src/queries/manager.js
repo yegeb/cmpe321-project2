@@ -44,23 +44,22 @@ async function getClubSeasons(clubId) {
 
 // Operation 4: Fixtures & Results
 async function getFixtures(clubId, { competitionId, season } = {}) {
-  let sql = `
-    SELECT m.match_ID, m.match_date, m.match_time, m.is_played,
-           m.home_goals, m.away_goals, m.home_club_ID, m.away_club_ID,
-           hc.club_name AS home_club, ac.club_name AS away_club,
-           comp.name AS competition, comp.season, s.stadium_name
-    FROM \`Match\` m
-    INNER JOIN Club hc          ON hc.club_ID          = m.home_club_ID
-    INNER JOIN Club ac          ON ac.club_ID          = m.away_club_ID
-    INNER JOIN Stadium s        ON s.stadium_ID        = m.stadium_ID
-    INNER JOIN Competition comp ON comp.competition_ID = m.competition_ID
-    WHERE (m.home_club_ID = ? OR m.away_club_ID = ?)`;
-  const params = [clubId, clubId];
-
-  if (competitionId) { sql += ' AND m.competition_ID = ?'; params.push(competitionId); }
-  if (season)        { sql += ' AND comp.season = ?';      params.push(season); }
-  sql += ' ORDER BY m.match_date DESC, m.match_time DESC';
-  return db.query(sql, params);
+  return db.query(
+    `SELECT m.match_ID, m.match_date, m.match_time, m.is_played,
+            m.home_goals, m.away_goals, m.home_club_ID, m.away_club_ID,
+            hc.club_name AS home_club, ac.club_name AS away_club,
+            comp.name AS competition, comp.season, s.stadium_name
+     FROM \`Match\` m
+     INNER JOIN Club hc          ON hc.club_ID          = m.home_club_ID
+     INNER JOIN Club ac          ON ac.club_ID          = m.away_club_ID
+     INNER JOIN Stadium s        ON s.stadium_ID        = m.stadium_ID
+     INNER JOIN Competition comp ON comp.competition_ID = m.competition_ID
+     WHERE (m.home_club_ID = ? OR m.away_club_ID = ?)
+       AND (m.competition_ID = ? OR ? IS NULL)
+       AND (comp.season = ? OR ? IS NULL)
+     ORDER BY m.match_date DESC, m.match_time DESC`,
+    [clubId, clubId, competitionId || null, competitionId || null, season || null, season || null]
+  );
 }
 
 // Operation 5: Eligible players for a match squad
@@ -191,30 +190,27 @@ async function getSquadStatsCurrent(clubId) {
 }
 
 async function getSquadStatsHistorical(clubId, season, competitionId) {
-  let sql = `
-    SELECT pe.name, pe.surname,
-           TIMESTAMPDIFF(YEAR, pe.date_of_birth, CURDATE()) AS age,
-           pl.main_position, pl.strong_foot, pl.height_cm, pl.market_value, pe.nationality,
-           COUNT(m.match_ID)                AS matches_played,
-           COALESCE(SUM(mp.goals), 0)       AS goals,
-           COALESCE(SUM(mp.assists), 0)     AS assists,
-           COALESCE(SUM(mp.yellow_cards),0) AS yellow_cards,
-           COALESCE(SUM(mp.red_cards), 0)   AS red_cards,
-           ROUND(AVG(mp.rating), 2)         AS avg_rating,
-           ROUND(AVG(mp.minutes_played), 1) AS avg_minutes
-    FROM Person pe
-    INNER JOIN Player pl ON pl.person_ID = pe.person_ID
-    INNER JOIN Match_Participation mp ON mp.player_id = pe.person_ID AND mp.club_id = ?
-    INNER JOIN \`Match\` m ON m.match_ID = mp.match_ID AND m.is_played = TRUE
-    INNER JOIN Competition comp ON comp.competition_ID = m.competition_ID
-    WHERE comp.season = ?`;
-  const params = [clubId, season];
-  if (competitionId) {
-    sql += ' AND comp.competition_ID = ?';
-    params.push(competitionId);
-  }
-  sql += ' GROUP BY pe.person_ID ORDER BY pe.surname';
-  return db.query(sql, params);
+  return db.query(
+    `SELECT pe.name, pe.surname,
+            TIMESTAMPDIFF(YEAR, pe.date_of_birth, CURDATE()) AS age,
+            pl.main_position, pl.strong_foot, pl.height_cm, pl.market_value, pe.nationality,
+            COUNT(m.match_ID)                AS matches_played,
+            COALESCE(SUM(mp.goals), 0)       AS goals,
+            COALESCE(SUM(mp.assists), 0)     AS assists,
+            COALESCE(SUM(mp.yellow_cards),0) AS yellow_cards,
+            COALESCE(SUM(mp.red_cards), 0)   AS red_cards,
+            ROUND(AVG(mp.rating), 2)         AS avg_rating,
+            ROUND(AVG(mp.minutes_played), 1) AS avg_minutes
+     FROM Person pe
+     INNER JOIN Player pl ON pl.person_ID = pe.person_ID
+     INNER JOIN Match_Participation mp ON mp.player_id = pe.person_ID AND mp.club_id = ?
+     INNER JOIN \`Match\` m ON m.match_ID = mp.match_ID AND m.is_played = TRUE
+     INNER JOIN Competition comp ON comp.competition_ID = m.competition_ID
+     WHERE comp.season = ?
+       AND (comp.competition_ID = ? OR ? IS NULL)
+     GROUP BY pe.person_ID ORDER BY pe.surname`,
+    [clubId, season, competitionId || null, competitionId || null]
+  );
 }
 
 // Operation 8: Competition Leaderboards
