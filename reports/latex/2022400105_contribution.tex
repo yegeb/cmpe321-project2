@@ -1,0 +1,74 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx} % Times New Roman
+\usepackage{setspace} % For 1.5 spacing
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+
+\onehalfspacing % Enforce 1.5 line spacing
+
+\begin{document}
+
+\begin{center}
+    \Large\textbf{Individual Contribution Report} \\
+    \vspace{0.5cm}
+    \normalsize
+    \textbf{Name:} Tuğçe Yücel \\
+    \textbf{Student ID:} 2022400105 \\
+    \textbf{Group Number:} \#31
+\end{center}
+
+\vspace{0.5cm}
+
+\section*{Tasks \& Contributions}
+
+In this project, I focused on database-level logic, system integrity, and security mechanisms, while also contributing to testing and documentation of the system.
+
+My primary responsibility was implementing the \textbf{Database Manager role}, which required enforcing critical business rules directly at the database level. I designed and implemented MySQL \textbf{triggers, constraints, and procedural logic} to ensure data integrity. This included enforcing match scheduling constraints such as preventing time conflicts (120-minute rule), as well as managing transfer and contract rules, such as limiting players to at most one loan and one permanent contract. These constraints were implemented strictly at the database level, as required by the project specifications.
+
+In addition, I implemented the \textbf{Referee role functionalities}. This involved writing SQL queries for inserting and updating match-related data such as final scores, goals, cards, and attendance information. I also developed queries to retrieve referee history and match records, ensuring correctness and consistency of match statistics.
+
+\subsection*{Security \& Database Design}
+
+I was responsible for implementing system-wide security mechanisms. I enforced password policies including minimum length and complexity requirements, and ensured that all user passwords were securely stored using hashing techniques. 
+
+To prevent SQL Injection vulnerabilities, I integrated \textbf{parameterized queries} into all database interactions. This ensured that user inputs were handled safely across the system.
+
+Additionally, I worked on the \textbf{database normalization and schema refinement (Part 3)}. I analyzed functional dependencies, evaluated the schema in terms of 3NF/BCNF compliance, and prepared the corresponding normalization report. I also contributed to refining the database schema and writing SQL DDL statements.
+
+\subsection*{Testing \& Refinement}
+
+I conducted extensive testing of both my own components and my teammate’s implementation. This included validating edge cases such as transfer constraints, contract limits, and scheduling conflicts.
+
+I verified that all triggers and constraints functioned correctly under different scenarios and ensured that invalid operations were properly rejected by the database. I also tested the integration between different roles to ensure consistency across the system.
+
+Furthermore, I contributed to improving overall system stability by identifying and fixing inconsistencies in queries and database logic.
+
+\subsection*{Report Writing}
+
+In addition to technical contributions, I was responsible for writing the project report. I documented the system design, database structure, implemented constraints, and overall architecture in a clear and structured manner, ensuring that the report accurately reflects the implemented system.
+
+\section*{Collaboration \& Challenges}
+
+Throughout the project, we maintained clear communication to ensure that our components integrated smoothly. Since the project required strict enforcement of constraints at the database level, coordination between application logic and database logic was essential.
+
+One of the main challenges was implementing complex business rules using triggers and constraints instead of application-level checks. Ensuring correctness while avoiding unintended side effects required careful design and thorough testing.
+
+Another challenge was maintaining consistency across multiple interconnected components such as transfers, contracts, and match scheduling, all of which required precise database-level enforcement.
+
+\section*{Self-Assessment}
+
+My main strength in this project was designing and implementing robust database-level solutions that ensure system integrity. I gained significant experience in writing advanced SQL logic, especially using triggers and constraints to enforce complex rules.
+
+I also improved my understanding of database normalization and secure system design, particularly in handling user authentication and preventing SQL injection.
+
+Additionally, working on testing and report writing helped me better understand the importance of documenting and validating complex systems.
+
+\section*{Use of AI Tools}
+
+I used AI tools primarily for guidance on general backend concepts, report structuring, and improving clarity in documentation.
+
+\textbf{All database-related implementations, including SQL queries, triggers, constraints, and normalization analysis, were developed by me}. AI tools were not used for core database logic, as I focused on fully understanding and implementing these components independently.
+
+\end{document}

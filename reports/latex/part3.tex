@@ -1,0 +1,311 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathptmx}
+\usepackage[margin=1in]{geometry}
+\usepackage{setspace}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\onehalfspacing
+\setlist[itemize]{leftmargin=*,itemsep=0.3em,topsep=0.3em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.3em,topsep=0.3em}
+
+\title{\textbf{TransferDB Application\\Part 3: Schema Refinement, Normalization, and Constraint Enforcement}}
+\author{CMPE 321 -- Introduction to Database Systems}
+\date{Spring 2026}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+This report documents the schema refinement and normalization analysis of the TransferDB application developed for CMPE 321 Project 2. The goal of the project is not only to implement a working football-oriented database application, but also to ensure that the underlying relational design remains structurally sound, normalized, and protected by database-level integrity constraints.
+
+The implemented system uses a MySQL backend together with an Express.js application layer and EJS-based role-specific panels. Four user roles are supported: Database Manager, Player, Manager, and Referee. All SQL statements are written manually, and prepared statements are used throughout the application via the \texttt{mysql2/promise} driver. Password validation and hashing are handled in the backend, while domain constraints such as scheduling conflicts, contract consistency, squad validity, and result integrity are enforced in the database using \texttt{CHECK} constraints and \texttt{TRIGGER}s.
+
+This report has four main purposes:
+\begin{itemize}
+    \item to summarize the implemented schema and application coverage,
+    \item to list the non-trivial functional dependencies of each relation,
+    \item to determine whether each relation satisfies BCNF or, if needed, 3NF,
+    \item to explain the additional integrity constraints enforced at the database level in Project 2.
+\end{itemize}
+
+\section{Implemented System Overview}
+The codebase is organized around a clear separation of concerns. The database schema is defined in \texttt{src/schema.sql}; seed and mock data are provided through \texttt{src/init\_data.sql}, \texttt{src/extra\_data.sql}, \texttt{src/extra\_data\_competitions.sql}, \texttt{src/extra\_data\_small\_clubs.sql}, and the CSV files under \texttt{initial\_data\_csv/}. The web application starts from \texttt{src/app.js}, uses session-based guards from \texttt{src/middleware/auth.js}, and splits role-specific SQL into \texttt{src/queries/*.js} and HTTP routing into \texttt{src/routes/*.js}. The EJS view templates in \texttt{src/views/} provide dedicated panels for each required operation.
+
+Functionally, the implementation covers the complete workflow demanded by the project specification:
+\begin{itemize}
+    \item registration, login, role-based session control, password policy validation, and password hashing,
+    \item Database Manager operations for stadium viewing and renaming, user creation, competition creation, manager assignment, transfer registration, and match scheduling,
+    \item Manager operations for fixtures, squad submission, standings, squad statistics, and competition leaderboards,
+    \item Referee operations for match history, career statistics, and match result submission with player-by-player statistics,
+    \item Player operations for profile access, performance summaries, match history, contract history, and transfer history.
+\end{itemize}
+
+An important design decision is that intentionally invalid historical records are preserved during initial loading. For that reason, \texttt{src/init\_data.sql} temporarily drops the restrictive triggers, inserts the seed data, hashes the imported passwords, and then recreates the triggers. This approach satisfies the project requirement that existing inconsistent records may remain in the database, while ensuring that no \emph{new} invalid records can be inserted afterwards.
+
+\section{Final Relational Schema}
+The implemented schema consists of the following core relations:
+
+\begin{itemize}
+    \item \texttt{DatabaseManager(db\_manager\_id, username, password\_hash)}
+    \item \texttt{Person(person\_ID, username, password\_hash, name, surname, nationality, date\_of\_birth)}
+    \item \texttt{Player(person\_ID, market\_value, main\_position, strong\_foot, height\_cm)}
+    \item \texttt{Manager(person\_ID, preferred\_formation, experience\_level)}
+    \item \texttt{Referee(person\_ID, license\_level, years\_experience)}
+    \item \texttt{Stadium(stadium\_ID, stadium\_name, city, capacity)}
+    \item \texttt{Club(club\_ID, club\_name, stadium\_ID, city, foundation\_year)}
+    \item \texttt{Leads(club\_ID, manager\_ID, start\_date, end\_date)}
+    \item \texttt{Contract(contract\_id, player\_id, club\_id, start\_date, end\_date, weekly\_wage, contract\_type)}
+    \item \texttt{PermanentContract(contract\_id)}
+    \item \texttt{LoanContract(contract\_id, parent\_permanent\_contract\_id)}
+    \item \texttt{TransferRecord(transfer\_id, player\_id, from\_club\_id, to\_club\_id, transfer\_date, transfer\_fee, transfer\_type)}
+    \item \texttt{Competition(competition\_ID, name, season, country, competition\_type)}
+    \item \texttt{Club\_Competition\_Participation(club\_ID, competition\_ID)}
+    \item \texttt{Match(match\_ID, match\_date, match\_time, is\_played, attendance, home\_goals, away\_goals, home\_club\_ID, away\_club\_ID, referee\_ID, stadium\_ID, competition\_ID)}
+    \item \texttt{Match\_Participation(match\_ID, player\_id, club\_id, is\_starter, minutes\_played, position\_in\_match, goals, assists, yellow\_cards, red\_cards, rating)}
+\end{itemize}
+
+The schema already reflects an important refinement compared with a more naive design: specialization is implemented cleanly through \texttt{Player}, \texttt{Manager}, and \texttt{Referee} as subtypes of \texttt{Person}, and through \texttt{PermanentContract} and \texttt{LoanContract} as subtypes of \texttt{Contract}. This decomposition isolates subtype-specific semantics and avoids nullable-column heavy tables with mixed meanings.
+
+\section{Functional Dependencies and Normalization Analysis}
+\subsection{Method}
+For each relation, we list the non-trivial functional dependencies implied by keys and declared uniqueness constraints. We then determine whether the relation satisfies Boyce-Codd Normal Form (BCNF). A relation is in BCNF if, for every non-trivial functional dependency $X \rightarrow Y$, $X$ is a superkey. In the rare case where BCNF would fail, 3NF would be examined and a decomposition decision would be justified. In the present implementation, all core relations satisfy BCNF.
+
+\subsection{DatabaseManager}
+\textbf{Functional dependencies}
+\begin{itemize}
+    \item \texttt{db\_manager\_id} $\rightarrow$ \texttt{username, password\_hash}
+    \item \texttt{username} $\rightarrow$ \texttt{db\_manager\_id, password\_hash}
+\end{itemize}
+\textbf{Normalization result} Both \texttt{db\_manager\_id} and \texttt{username} are candidate keys because \texttt{username} is declared \texttt{UNIQUE}. Therefore every determinant is a superkey, and the relation is in BCNF.
+
+\subsection{Person}
+\textbf{Functional dependencies}
+\begin{itemize}
+    \item \texttt{person\_ID} $\rightarrow$ \texttt{username, password\_hash, name, surname, nationality, date\_of\_birth}
+    \item \texttt{username} $\rightarrow$ \texttt{person\_ID, password\_hash, name, surname, nationality, date\_of\_birth}
+\end{itemize}
+\textbf{Normalization result} Since both \texttt{person\_ID} and \texttt{username} uniquely identify a tuple, both are candidate keys. Hence the relation satisfies BCNF.
+
+\subsection{Player}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{person\_ID} $\rightarrow$ \texttt{market\_value, main\_position, strong\_foot, height\_cm}
+\end{itemize}
+\textbf{Normalization result} The primary key is \texttt{person\_ID}, and it determines all non-key attributes. Therefore \texttt{Player} is in BCNF.
+
+\subsection{Manager}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{person\_ID} $\rightarrow$ \texttt{preferred\_formation, experience\_level}
+\end{itemize}
+\textbf{Normalization result} The determinant is the key of the relation, so \texttt{Manager} is in BCNF.
+
+\subsection{Referee}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{person\_ID} $\rightarrow$ \texttt{license\_level, years\_experience}
+\end{itemize}
+\textbf{Normalization result} The relation is in BCNF because its only determinant is the primary key.
+
+\subsection{Stadium}
+\textbf{Functional dependencies}
+\begin{itemize}
+    \item \texttt{stadium\_ID} $\rightarrow$ \texttt{stadium\_name, city, capacity}
+    \item \texttt{(stadium\_name, city)} $\rightarrow$ \texttt{stadium\_ID, capacity}
+\end{itemize}
+\textbf{Normalization result} The schema enforces \texttt{UNIQUE(stadium\_name, city)}. Thus both \texttt{stadium\_ID} and \texttt{(stadium\_name, city)} are candidate keys. Every non-trivial determinant is a superkey, so the relation is in BCNF.
+
+\subsection{Club}
+\textbf{Functional dependencies}
+\begin{itemize}
+    \item \texttt{club\_ID} $\rightarrow$ \texttt{club\_name, stadium\_ID, city, foundation\_year}
+    \item \texttt{club\_name} $\rightarrow$ \texttt{club\_ID, stadium\_ID, city, foundation\_year}
+\end{itemize}
+\textbf{Normalization result} Because \texttt{club\_name} is declared \texttt{UNIQUE}, both determinants are candidate keys. Therefore \texttt{Club} is in BCNF.
+
+\subsection{Leads}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{(club\_ID, manager\_ID, start\_date)} $\rightarrow$ \texttt{end\_date}
+\end{itemize}
+\textbf{Normalization result} The composite primary key determines the only non-key attribute. Temporal business rules such as ``only one active manager per club'' are not functional dependency violations; they are time-dependent integrity rules and are therefore enforced by triggers instead of decomposition. The relation itself is in BCNF.
+
+\subsection{Contract}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{contract\_id} $\rightarrow$ \texttt{player\_id, club\_id, start\_date, end\_date, weekly\_wage, contract\_type}
+\end{itemize}
+\textbf{Normalization result} \texttt{contract\_id} is the sole determinant and the primary key; therefore \texttt{Contract} is in BCNF.
+
+\subsection{PermanentContract}
+\textbf{Functional dependency} This relation contains only the key attribute \texttt{contract\_id}. Thus there is no non-trivial dependency other than the key itself.
+
+\textbf{Normalization result} The relation is trivially in BCNF.
+
+\subsection{LoanContract}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{contract\_id} $\rightarrow$ \texttt{parent\_permanent\_contract\_id}
+\end{itemize}
+\textbf{Normalization result} The determinant is the primary key, so the relation is in BCNF.
+
+\subsection{TransferRecord}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{transfer\_id} $\rightarrow$ \texttt{player\_id, from\_club\_id, to\_club\_id, transfer\_date, transfer\_fee, transfer\_type}
+\end{itemize}
+\textbf{Normalization result} Since \texttt{transfer\_id} is the key and determines all other attributes, the relation is in BCNF.
+
+\subsection{Competition}
+\textbf{Functional dependencies}
+\begin{itemize}
+    \item \texttt{competition\_ID} $\rightarrow$ \texttt{name, season, country, competition\_type}
+    \item \texttt{(name, season)} $\rightarrow$ \texttt{competition\_ID, country, competition\_type}
+\end{itemize}
+\textbf{Normalization result} The schema enforces \texttt{UNIQUE(name, season)}. Hence both \texttt{competition\_ID} and \texttt{(name, season)} are candidate keys, and the relation is in BCNF.
+
+\subsection{Club\_Competition\_Participation}
+\textbf{Functional dependency} The relation contains only the composite key \texttt{(club\_ID, competition\_ID)} and no non-key attributes.
+
+\textbf{Normalization result} It is trivially in BCNF.
+
+\subsection{Match}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{match\_ID} $\rightarrow$ \texttt{match\_date, match\_time, is\_played, attendance, home\_goals, away\_goals, home\_club\_ID, away\_club\_ID, referee\_ID, stadium\_ID, competition\_ID}
+\end{itemize}
+\textbf{Normalization result} The relation is in BCNF because the only determinant is the primary key. Scheduling restrictions such as 120-minute conflict windows are temporal rules, not functional dependencies, and are therefore enforced by triggers rather than further decomposition.
+
+\subsection{Match\_Participation}
+\textbf{Functional dependency}
+\begin{itemize}
+    \item \texttt{(match\_ID, player\_id)} $\rightarrow$ \texttt{club\_id, is\_starter, minutes\_played, position\_in\_match, goals, assists, yellow\_cards, red\_cards, rating}
+\end{itemize}
+\textbf{Normalization result} The composite primary key determines all non-key attributes. Thus the relation is in BCNF.
+
+\subsection{Normalization Summary}
+All relations in the final schema satisfy BCNF. Consequently, no additional BCNF decomposition was required during Project 2. This outcome is mainly due to three design choices:
+\begin{itemize}
+    \item the consistent use of surrogate identifiers as primary keys,
+    \item the explicit use of alternate keys where natural uniqueness exists (for example, \texttt{username}, \texttt{club\_name}, and \texttt{(name, season)}),
+    \item subtype decomposition for role-specific persons and contract-specific semantics.
+\end{itemize}
+
+Because no relation violated BCNF, there was no need to propose or evaluate lossless-join or dependency-preserving decompositions beyond the schema already implemented.
+
+\section{Additional Integrity Constraints Enforced in Project 2}
+The project specification explicitly requires critical business rules to be enforced at the database level rather than only in backend logic. The implemented schema therefore combines native \texttt{CHECK} constraints with a comprehensive trigger set. The most important enforced rules are summarized below.
+
+\subsection{Attribute-Level Validity via CHECK Constraints}
+Several basic semantic constraints are enforced directly in table definitions:
+\begin{itemize}
+    \item non-empty textual fields for names, nationalities, club names, competition names, and stadium names,
+    \item strictly positive market value, height, capacity, and weekly wage,
+    \item non-negative attendance and goal values,
+    \item \texttt{home\_club\_ID \neq away\_club\_ID},
+    \item bounded \texttt{minutes\_played}, \texttt{yellow\_cards}, \texttt{red\_cards}, and \texttt{rating},
+    \item \texttt{end\_date > start\_date} for leadership assignments and contracts.
+\end{itemize}
+
+\subsection{Scheduling Constraints for Matches}
+The following trigger-based constraints protect the match calendar:
+\begin{itemize}
+    \item \texttt{trg\_match\_future\_only}: a newly scheduled match must be in the future,
+    \item \texttt{trg\_match\_stadium\_conflict}: no two matches may use the same stadium within 120 minutes,
+    \item \texttt{trg\_match\_referee\_conflict}: the same referee cannot be assigned to overlapping 120-minute windows,
+    \item \texttt{trg\_match\_club\_conflict}: a club cannot appear in two matches within 120 minutes, whether as home or away club.
+\end{itemize}
+These triggers directly implement one of the most important temporal constraints in the project description.
+
+\subsection{Manager Assignment Constraints}
+The \texttt{Leads} relation is further protected by:
+\begin{itemize}
+    \item \texttt{trg\_manager\_one\_club}: a manager cannot actively lead more than one club,
+    \item \texttt{trg\_club\_one\_manager}: a club cannot have more than one active manager.
+\end{itemize}
+In addition, the application-side assignment routine closes conflicting active assignments before inserting a new valid one, preserving a consistent managerial timeline.
+
+\subsection{Transfer and Contract Constraints}
+Project 2 required stronger control over contracts and transfers. The following rules are enforced:
+\begin{itemize}
+    \item \texttt{trg\_transfer\_fee\_type\_check}: Free transfers must have fee 0, whereas Purchase and Loan transfers must have a positive fee,
+    \item \texttt{trg\_contract\_date\_check}: a contract must end after it starts,
+    \item \texttt{trg\_contract\_transfer\_type\_match}: contracts inserted on the current transfer date must match the registered transfer type,
+    \item \texttt{trg\_contract\_limit}: a player may hold at most one active permanent contract and one active loan contract, and a loan requires an active permanent contract with another club.
+\end{itemize}
+
+The subtype design also contributes here: \texttt{PermanentContract} and \texttt{LoanContract} distinguish subtype-specific semantics cleanly. When a loan is created, the system stores the parent permanent contract identifier in \texttt{LoanContract}, making the parent-club relationship explicit and queryable.
+
+\subsection{Squad Submission Constraints}
+Match squad validity is enforced by several triggers on \texttt{Match\_Participation}:
+\begin{itemize}
+    \item \texttt{trg\_max\_starters}: a club cannot submit more than 11 starters for a match,
+    \item \texttt{trg\_max\_squad}: a club cannot register more than 23 players for a match,
+    \item \texttt{trg\_match\_participation\_active\_contract}: a player must have an active contract with the selected club on the match date,
+    \item \texttt{trg\_match\_participation\_loan\_parent\_block}: a loaned player cannot play for the parent club during the loan period.
+\end{itemize}
+
+This is complemented by the manager-side player selection query, which lists only eligible contracted players for the selected match date. However, the key correctness guarantee still resides in the database triggers, as required by the specification.
+
+\subsection{Result Submission and Match Finalization Constraints}
+The referee workflow is also protected at the database level:
+\begin{itemize}
+    \item \texttt{trg\_attendance\_capacity}: attendance cannot exceed the stadium capacity,
+    \item \texttt{trg\_match\_result\_timing}: a match cannot be marked as played before kickoff,
+    \item \texttt{trg\_match\_result\_completeness}: once a match is finalized it is locked, and every played match must include attendance and both scores,
+    \item \texttt{trg\_match\_result\_goal\_consistency}: the home and away team scores must equal the sum of player goals in \texttt{Match\_Participation},
+    \item \texttt{trg\_match\_participation\_player\_goal\_max}: no player can be assigned more goals than the team total, and player stats cannot be changed after the match is finalized,
+    \item \texttt{trg\_match\_played\_requires\_full\_squads}: before a match is marked as played, both clubs must have at least 11 and at most 23 squad members, and exactly 11 starters.
+\end{itemize}
+
+Together, these triggers ensure that submitted results are internally consistent and that a completed match record is auditable.
+
+\section{Security and Application-Side Protections}
+The project statement makes a deliberate distinction between domain integrity and security responsibilities. In the final implementation, security-sensitive operations are handled in the backend.
+
+\subsection{Password Policy}
+Both \texttt{src/routes/auth.js} and \texttt{src/routes/dbManager.js} enforce the required password policy before user creation. A password is rejected unless it contains:
+\begin{itemize}
+    \item at least 8 characters,
+    \item at least one uppercase letter,
+    \item at least one lowercase letter,
+    \item at least one digit,
+    \item at least one special character.
+\end{itemize}
+
+\subsection{Password Hashing}
+Passwords are hashed with SHA-256 before insertion. The login flow hashes the entered password and compares only hash values against stored records. Moreover, the seed-loading script converts all imported plain-text mock credentials into hashes after insertion, so the persistent database state does not retain plain-text passwords.
+
+\subsection{SQL Injection Prevention}
+The system uses prepared statements through the shared database helper in \texttt{src/db.js}. All query modules pass user input as parameter arrays rather than concatenating raw values into SQL strings. This design provides protection against the SQL injection attacks explicitly mentioned in the assignment text.
+
+\section{How the Implemented Operations Reflect the Schema}
+The final implementation demonstrates that the schema design supports the project operations naturally:
+\begin{itemize}
+    \item the \texttt{Person}-subtype structure allows a single authentication flow while preserving role-specific attributes,
+    \item \texttt{Leads} represents managerial assignment history without losing past records,
+    \item \texttt{Contract}, \texttt{PermanentContract}, \texttt{LoanContract}, and \texttt{TransferRecord} together model career movement and financial obligations,
+    \item \texttt{Match} and \texttt{Match\_Participation} jointly support both fixture planning and detailed post-match statistics,
+    \item \texttt{Competition} and \texttt{Club\_Competition\_Participation} support standings, competition-based filtering, and leaderboards.
+\end{itemize}
+
+This close alignment between logical design and application features is one of the strongest aspects of the project. Most required queries map cleanly onto the normalized schema through joins and aggregations, without needing denormalized helper tables.
+
+\section{Conclusion}
+The TransferDB implementation preserves a well-structured relational design while extending it into a robust database application. From a normalization perspective, every core relation satisfies BCNF, so the schema is free from the major update, insertion, and deletion anomalies that commonly affect poorly decomposed designs. From an integrity perspective, Project 2 significantly strengthens the schema through database-enforced business rules covering scheduling, contracts, squad formation, and result submission.
+
+In summary, the final system meets the goals of schema refinement and normalization while also satisfying the project's most important practical requirement: the database protects its own consistency even when invalid operations are attempted outside the web interface.
+
+\section{Use of AI Tools}
+AI assistance was used during the preparation of the written report to improve wording, structure, and presentation quality. In particular, an AI assistant was used to help transform implementation notes and code-level observations into a more polished academic narrative. The final report content was still checked against the actual project files, schema definitions, and application logic in the codebase before completion.
+
+No ORM, automatic schema generator, or AI-produced database framework was used in the implementation itself. The database schema, SQL queries, triggers, and application behavior described in this report are grounded in the submitted project files.
+
+\end{document}
