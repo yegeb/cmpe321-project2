@@ -34,11 +34,44 @@ async function execute(sql, params = []) {
 }
 
 /** Return MAX(col)+1 from table — simple sequential ID generation. */
-async function nextId(table, col) {
-  const row = await queryOne(
+async function nextId(table, col, executor = null) {
+  const runner = executor || { queryOne };
+  const row = await runner.queryOne(
     `SELECT COALESCE(MAX(\`${col}\`), 0) + 1 AS nxt FROM \`${table}\``
   );
   return row.nxt;
 }
 
-module.exports = { query, queryOne, execute, nextId };
+async function withTransaction(work) {
+  const conn = await pool.getConnection();
+
+  const tx = {
+    query: async (sql, params = []) => {
+      const [rows] = await conn.execute(sql, params);
+      return rows;
+    },
+    queryOne: async (sql, params = []) => {
+      const [rows] = await conn.execute(sql, params);
+      return rows[0] ?? null;
+    },
+    execute: async (sql, params = []) => {
+      const [result] = await conn.execute(sql, params);
+      return result;
+    },
+    nextId: async (table, col) => nextId(table, col, tx),
+  };
+
+  try {
+    await conn.beginTransaction();
+    const result = await work(tx);
+    await conn.commit();
+    return result;
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+}
+
+module.exports = { query, queryOne, execute, nextId, withTransaction };

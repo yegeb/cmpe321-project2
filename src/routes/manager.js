@@ -29,7 +29,10 @@ router.get('/submit-squad/:matchId', guard, async (req, res) => {
   if (!club) { req.session.flash = 'No club assigned.'; return res.redirect('/manager'); }
   const match = await q.getMatchForClub(req.params.matchId, club.club_ID);
   if (!match) { req.session.flash = 'Match not found.'; return res.redirect('/manager/fixtures'); }
-  const eligible   = await q.getEligiblePlayers(club.club_ID);
+  const matchDate = match.match_date instanceof Date
+    ? match.match_date.toISOString().split('T')[0]
+    : String(match.match_date).split('T')[0];
+  const eligible   = await q.getEligiblePlayers(club.club_ID, matchDate);
   const alreadyRows = await q.getMatchSquad(req.params.matchId, club.club_ID);
   const alreadyIds  = new Set(alreadyRows.map(r => r.player_id));
   res.render('manager/submit_squad', { match, eligible, alreadyIds, club });

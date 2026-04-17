@@ -42,6 +42,10 @@ router.post('/submit-result/:matchId', guard, async (req, res) => {
   const matchId = req.params.matchId;
   const match   = await q.getMatchForReferee(matchId, req.session.user.id);
   if (!match) { req.session.flash = 'Unauthorized.'; return res.redirect('/referee/match-history'); }
+  if (match.is_played) {
+    req.session.flash = 'Result has already been submitted for this match.';
+    return res.redirect('/referee/match-history');
+  }
 
   const participants = await q.getMatchParticipants(matchId);
   const playerStats  = participants.map(p => ({

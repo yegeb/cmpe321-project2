@@ -17,10 +17,11 @@ async function createPersonUser({
   surname,
   nationality,
   dateOfBirth,
+  executor = db,
 }) {
-  const personId = await db.nextId('Person', 'person_ID');
+  const personId = await executor.nextId('Person', 'person_ID');
 
-  await db.execute(
+  await executor.execute(
     `INSERT INTO Person
        (person_ID, username, password_hash, name, surname, nationality, date_of_birth)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -34,66 +35,75 @@ async function createPlayer({
   username, passwordHash, name, surname, nationality, dateOfBirth,
   marketValue, mainPosition, strongFoot, heightCm,
 }) {
-  const personId = await createPersonUser({
-    username,
-    passwordHash,
-    name,
-    surname,
-    nationality,
-    dateOfBirth,
+  return db.withTransaction(async (tx) => {
+    const personId = await createPersonUser({
+      username,
+      passwordHash,
+      name,
+      surname,
+      nationality,
+      dateOfBirth,
+      executor: tx,
+    });
+
+    await tx.execute(
+      `INSERT INTO Player (person_ID, market_value, main_position, strong_foot, height_cm)
+       VALUES (?, ?, ?, ?, ?)`,
+      [personId, marketValue, mainPosition, strongFoot, heightCm]
+    );
+
+    return personId;
   });
-
-  await db.execute(
-    `INSERT INTO Player (person_ID, market_value, main_position, strong_foot, height_cm)
-     VALUES (?, ?, ?, ?, ?)`,
-    [personId, marketValue, mainPosition, strongFoot, heightCm]
-  );
-
-  return personId;
 }
 
 async function createManager({
   username, passwordHash, name, surname, nationality, dateOfBirth,
   preferredFormation, experienceLevel,
 }) {
-  const personId = await createPersonUser({
-    username,
-    passwordHash,
-    name,
-    surname,
-    nationality,
-    dateOfBirth,
+  return db.withTransaction(async (tx) => {
+    const personId = await createPersonUser({
+      username,
+      passwordHash,
+      name,
+      surname,
+      nationality,
+      dateOfBirth,
+      executor: tx,
+    });
+
+    await tx.execute(
+      `INSERT INTO Manager (person_ID, preferred_formation, experience_level)
+       VALUES (?, ?, ?)`,
+      [personId, preferredFormation, experienceLevel]
+    );
+
+    return personId;
   });
-
-  await db.execute(
-    `INSERT INTO Manager (person_ID, preferred_formation, experience_level)
-     VALUES (?, ?, ?)`,
-    [personId, preferredFormation, experienceLevel]
-  );
-
-  return personId;
 }
 
 async function createReferee({
   username, passwordHash, name, surname, nationality, dateOfBirth,
   licenseLevel, yearsExperience,
 }) {
-  const personId = await createPersonUser({
-    username,
-    passwordHash,
-    name,
-    surname,
-    nationality,
-    dateOfBirth,
+  return db.withTransaction(async (tx) => {
+    const personId = await createPersonUser({
+      username,
+      passwordHash,
+      name,
+      surname,
+      nationality,
+      dateOfBirth,
+      executor: tx,
+    });
+
+    await tx.execute(
+      `INSERT INTO Referee (person_ID, license_level, years_experience)
+       VALUES (?, ?, ?)`,
+      [personId, licenseLevel, yearsExperience]
+    );
+
+    return personId;
   });
-
-  await db.execute(
-    `INSERT INTO Referee (person_ID, license_level, years_experience)
-     VALUES (?, ?, ?)`,
-    [personId, licenseLevel, yearsExperience]
-  );
-
-  return personId;
 }
 
 // Operation 2: View stadiums
@@ -213,28 +223,45 @@ async function getCurrentAssignments() {
 }
 
 async function assignManager({ managerId, clubId, startDate }) {
-  // Close any existing active assignment for this manager with a different club
-  await db.execute(
-    `UPDATE Leads
-     SET end_date = ?
-     WHERE manager_ID = ? AND end_date IS NULL`,
-    [startDate, managerId]
-  );
+  return db.withTransaction(async (tx) => {
+    const conflictingAssignments = await tx.query(
+      `SELECT manager_ID, club_ID, start_date
+       FROM Leads
+       WHERE end_date IS NULL
+         AND (manager_ID = ? OR club_ID = ?)`,
+      [managerId, clubId]
+    );
 
-  // Close any existing active assignment for this club with a different manager
-  await db.execute(
-    `UPDATE Leads
-     SET end_date = ?
-     WHERE club_ID = ? AND end_date IS NULL`,
-    [startDate, clubId]
-  );
+    for (const assignment of conflictingAssignments) {
+      const existingStart = assignment.start_date instanceof Date
+        ? assignment.start_date.toISOString().split('T')[0]
+        : String(assignment.start_date).split('T')[0];
 
-  // Insert new assignment
-  return db.execute(
-    `INSERT INTO Leads (club_ID, manager_ID, start_date, end_date)
-     VALUES (?, ?, ?, NULL)`,
-    [clubId, managerId, startDate]
-  );
+      if (existingStart >= startDate) {
+        throw new Error('New assignment start date must be later than the current active assignment start date.');
+      }
+    }
+
+    await tx.execute(
+      `UPDATE Leads
+       SET end_date = DATE_SUB(?, INTERVAL 1 DAY)
+       WHERE manager_ID = ? AND end_date IS NULL`,
+      [startDate, managerId]
+    );
+
+    await tx.execute(
+      `UPDATE Leads
+       SET end_date = DATE_SUB(?, INTERVAL 1 DAY)
+       WHERE club_ID = ? AND end_date IS NULL`,
+      [startDate, clubId]
+    );
+
+    return tx.execute(
+      `INSERT INTO Leads (club_ID, manager_ID, start_date, end_date)
+       VALUES (?, ?, ?, NULL)`,
+      [clubId, managerId, startDate]
+    );
+  });
 }
 
 async function removeManagerAssignment(managerId) {
@@ -260,72 +287,83 @@ async function getPlayers() {
 }
 
 async function registerTransfer({ playerId, fromClubId, toClubId, transferType, transferFee, contractType, weeklyWage, endDate }) {
-  const transferId = await db.nextId('TransferRecord', 'transfer_id');
-  const contractId = await db.nextId('Contract', 'contract_id');
-
-  if (contractType === 'Permanent') {
-    await db.execute(
-      `UPDATE Contract
-       SET end_date = CURDATE()
-       WHERE player_id = ?
-         AND contract_type = 'Permanent'
-         AND end_date > CURDATE()`,
-      [playerId]
-    );
+  if ((transferType === 'Loan' && contractType !== 'Loan') ||
+      (transferType !== 'Loan' && contractType !== 'Permanent')) {
+    throw new Error('Transfer type and contract type do not match the project rules.');
+  }
+  if (fromClubId && String(fromClubId) === String(toClubId)) {
+    throw new Error('Source and destination club cannot be the same.');
   }
 
-  await db.execute(
-    `INSERT INTO TransferRecord
-       (transfer_id, player_id, from_club_id, to_club_id, transfer_date, transfer_fee, transfer_type)
-     VALUES (?,?,?,?,CURDATE(),?,?)`,
-    [transferId, playerId, fromClubId, toClubId, transferFee, transferType]
-  );
+  return db.withTransaction(async (tx) => {
+    const transferId = await tx.nextId('TransferRecord', 'transfer_id');
+    const contractId = await tx.nextId('Contract', 'contract_id');
 
-  await db.execute(
-    `INSERT INTO Contract
-       (contract_id, player_id, club_id, start_date, end_date, weekly_wage, contract_type)
-     VALUES (?,?,?,CURDATE(),?,?,?)`,
-    [contractId, playerId, toClubId, endDate, weeklyWage, contractType]
-  );
-
-  if (contractType === 'Permanent') {
-    await db.execute(
-      `INSERT INTO PermanentContract (contract_id)
-       VALUES (?)`,
-      [contractId]
-    );
-  } else {
-    const parentContract = await db.queryOne(
-      `SELECT pc.contract_id
-       FROM PermanentContract pc
-       INNER JOIN Contract c ON c.contract_id = pc.contract_id
-       WHERE c.player_id = ?
-         AND c.club_id <> ?
-         AND c.end_date > CURDATE()
-       ORDER BY c.start_date DESC
-       LIMIT 1`,
-      [playerId, toClubId]
+    await tx.execute(
+      `INSERT INTO TransferRecord
+         (transfer_id, player_id, from_club_id, to_club_id, transfer_date, transfer_fee, transfer_type)
+       VALUES (?,?,?,?,CURDATE(),?,?)`,
+      [transferId, playerId, fromClubId, toClubId, transferFee, transferType]
     );
 
-    if (!parentContract) {
-      throw new Error('Loan contract requires an active permanent parent club.');
+    if (contractType === 'Permanent') {
+      await tx.execute(
+        `UPDATE Contract
+         SET end_date = CURDATE()
+         WHERE player_id = ?
+           AND contract_type = 'Permanent'
+           AND start_date < CURDATE()
+           AND end_date > CURDATE()`,
+        [playerId]
+      );
     }
 
-    await db.execute(
-      `INSERT INTO LoanContract (contract_id, parent_permanent_contract_id)
-       VALUES (?, ?)`,
-      [contractId, parentContract.contract_id]
+    await tx.execute(
+      `INSERT INTO Contract
+         (contract_id, player_id, club_id, start_date, end_date, weekly_wage, contract_type)
+       VALUES (?,?,?,CURDATE(),?,?,?)`,
+      [contractId, playerId, toClubId, endDate, weeklyWage, contractType]
     );
-  }
 
-  if (transferType === 'Purchase') {
-    await db.execute(
-      `UPDATE Player
-       SET market_value = ?
-       WHERE person_ID = ?`,
-      [transferFee, playerId]
-    );
-  }
+    if (contractType === 'Permanent') {
+      await tx.execute(
+        `INSERT INTO PermanentContract (contract_id)
+         VALUES (?)`,
+        [contractId]
+      );
+    } else {
+      const parentContract = await tx.queryOne(
+        `SELECT pc.contract_id
+         FROM PermanentContract pc
+         INNER JOIN Contract c ON c.contract_id = pc.contract_id
+         WHERE c.player_id = ?
+           AND c.club_id <> ?
+           AND c.end_date > CURDATE()
+         ORDER BY c.start_date DESC
+         LIMIT 1`,
+        [playerId, toClubId]
+      );
+
+      if (!parentContract) {
+        throw new Error('Loan contract requires an active permanent parent club.');
+      }
+
+      await tx.execute(
+        `INSERT INTO LoanContract (contract_id, parent_permanent_contract_id)
+         VALUES (?, ?)`,
+        [contractId, parentContract.contract_id]
+      );
+    }
+
+    if (transferType === 'Purchase') {
+      await tx.execute(
+        `UPDATE Player
+         SET market_value = ?
+         WHERE person_ID = ?`,
+        [transferFee, playerId]
+      );
+    }
+  });
 }
 
 module.exports = {

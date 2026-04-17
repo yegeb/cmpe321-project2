@@ -13,6 +13,8 @@ DROP TRIGGER IF EXISTS trg_match_club_conflict;
 DROP TRIGGER IF EXISTS trg_contract_limit;
 DROP TRIGGER IF EXISTS trg_match_result_timing;
 DROP TRIGGER IF EXISTS trg_match_result_completeness;
+DROP TRIGGER IF EXISTS trg_match_result_goal_consistency;
+DROP TRIGGER IF EXISTS trg_match_participation_player_goal_max;
 DROP TRIGGER IF EXISTS trg_match_participation_active_contract;
 DROP TRIGGER IF EXISTS trg_match_participation_loan_parent_block;
 DROP TRIGGER IF EXISTS trg_match_played_requires_full_squads;
@@ -272,6 +274,13 @@ SELECT DISTINCT home_club_ID, competition_ID FROM `Match`
 UNION
 SELECT DISTINCT away_club_ID, competition_ID FROM `Match`;
 
+-- Hash all seeded passwords so no plain-text credential remains in the database.
+UPDATE DatabaseManager
+SET password_hash = SHA2(password_hash, 256);
+
+UPDATE Person
+SET password_hash = SHA2(password_hash, 256);
+
 -- ============================================================
 -- Recreate triggers that were dropped at the top
 -- ============================================================
@@ -316,6 +325,12 @@ BEFORE INSERT ON `Match`
 FOR EACH ROW
 BEGIN
     DECLARE conflict_count INT;
+
+    IF NEW.home_club_ID = NEW.away_club_ID THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Home club and away club must be different.';
+    END IF;
+
     SELECT COUNT(*) INTO conflict_count
     FROM `Match`
     WHERE (home_club_ID IN (NEW.home_club_ID, NEW.away_club_ID)
@@ -396,11 +411,73 @@ CREATE TRIGGER trg_match_result_completeness
 BEFORE UPDATE ON `Match`
 FOR EACH ROW
 BEGIN
+    IF OLD.is_played = TRUE THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Played matches are locked and cannot be modified.';
+    END IF;
+
     IF NEW.is_played = TRUE THEN
         IF NEW.home_goals IS NULL OR NEW.away_goals IS NULL OR NEW.attendance IS NULL THEN
             SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Played matches must include attendance, home goals, and away goals.';
         END IF;
+    END IF;
+END$$
+
+CREATE TRIGGER trg_match_result_goal_consistency
+BEFORE UPDATE ON `Match`
+FOR EACH ROW
+BEGIN
+    DECLARE home_player_goals INT;
+    DECLARE away_player_goals INT;
+
+    IF NEW.is_played = TRUE AND OLD.is_played = FALSE THEN
+        SELECT COALESCE(SUM(goals), 0) INTO home_player_goals
+        FROM Match_Participation
+        WHERE match_ID = NEW.match_ID
+          AND club_id = NEW.home_club_ID;
+
+        SELECT COALESCE(SUM(goals), 0) INTO away_player_goals
+        FROM Match_Participation
+        WHERE match_ID = NEW.match_ID
+          AND club_id = NEW.away_club_ID;
+
+        IF home_player_goals <> NEW.home_goals THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Goal mismatch: home team player goals do not sum to reported score.';
+        END IF;
+
+        IF away_player_goals <> NEW.away_goals THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Goal mismatch: away team player goals do not sum to reported score.';
+        END IF;
+    END IF;
+END$$
+
+CREATE TRIGGER trg_match_participation_player_goal_max
+BEFORE UPDATE ON Match_Participation
+FOR EACH ROW
+BEGIN
+    DECLARE team_goals INT;
+    DECLARE match_played BOOLEAN;
+
+    SELECT is_played INTO match_played
+    FROM `Match`
+    WHERE match_ID = NEW.match_ID;
+
+    IF match_played = TRUE THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Player statistics for played matches are locked and cannot be modified.';
+    END IF;
+
+    SELECT CASE WHEN home_club_ID = NEW.club_id THEN home_goals ELSE away_goals END
+    INTO team_goals
+    FROM `Match`
+    WHERE match_ID = NEW.match_ID;
+
+    IF team_goals IS NOT NULL AND NEW.goals > team_goals THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'A player cannot score more goals than their team scored.';
     END IF;
 END$$
 

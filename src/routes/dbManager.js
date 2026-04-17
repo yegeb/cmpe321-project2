@@ -30,6 +30,12 @@ function requireFields(values) {
   return null;
 }
 
+function renderWithFlash(req, res, view, extra = {}) {
+  res.locals.flash = req.session.flash ?? res.locals.flash ?? null;
+  delete req.session.flash;
+  return res.render(view, extra);
+}
+
 router.get('/',          guard, (req, res) => res.render('db_manager/dashboard'));
 
 router.get('/stadiums',  guard, async (req, res) => {
@@ -161,7 +167,7 @@ router.post('/create-user', guard, async (req, res) => {
   const passwordError = validatePassword(req.body.password || '');
   if (passwordError) {
     req.session.flash = passwordError;
-    return res.render('db_manager/create_user', { body, selectedRole });
+    return renderWithFlash(req, res, 'db_manager/create_user', { body, selectedRole });
   }
 
   try {
@@ -255,7 +261,7 @@ router.post('/create-user', guard, async (req, res) => {
     res.redirect('/db-manager/create-user');
   } catch (err) {
     req.session.flash = `Error: ${err.message}`;
-    res.render('db_manager/create_user', { body, selectedRole });
+    renderWithFlash(req, res, 'db_manager/create_user', { body, selectedRole });
   }
 });
 

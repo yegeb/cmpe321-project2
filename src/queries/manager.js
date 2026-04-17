@@ -63,20 +63,24 @@ async function getFixtures(clubId, { competitionId, season } = {}) {
 }
 
 // Operation 5: Eligible players for a match squad
-async function getEligiblePlayers(clubId) {
+async function getEligiblePlayers(clubId, matchDate) {
   return db.query(
     `SELECT DISTINCT p.person_ID, p.name, p.surname, pl.main_position
      FROM Person p
      INNER JOIN Player pl ON pl.person_ID = p.person_ID
      INNER JOIN Contract c ON c.player_id = p.person_ID
-     WHERE c.club_id = ? AND c.end_date > CURDATE()
+     WHERE c.club_id = ?
+       AND c.start_date <= ?
+       AND c.end_date >= ?
        AND p.person_ID NOT IN (
          SELECT c2.player_id FROM Contract c2
          INNER JOIN LoanContract lc ON lc.contract_id = c2.contract_id
-         WHERE c2.end_date > CURDATE() AND c2.club_id <> ?
+         WHERE c2.start_date <= ?
+           AND c2.end_date >= ?
+           AND c2.club_id <> ?
        )
      ORDER BY p.surname`,
-    [clubId, clubId]
+    [clubId, matchDate, matchDate, matchDate, matchDate, clubId]
   );
 }
 
@@ -118,29 +122,29 @@ async function getStandings(competitionId) {
   return db.query(
     `SELECT
        c.club_name,
-       COUNT(m.match_ID) AS played,
-       SUM(CASE
+       COALESCE(COUNT(m.match_ID), 0) AS played,
+       COALESCE(SUM(CASE
          WHEN (m.home_club_ID = c.club_ID AND m.home_goals > m.away_goals)
            OR (m.away_club_ID = c.club_ID AND m.away_goals > m.home_goals)
-         THEN 1 ELSE 0 END) AS wins,
-       SUM(CASE WHEN m.home_goals = m.away_goals THEN 1 ELSE 0 END) AS draws,
-       SUM(CASE
+         THEN 1 ELSE 0 END), 0) AS wins,
+       COALESCE(SUM(CASE WHEN m.home_goals = m.away_goals THEN 1 ELSE 0 END), 0) AS draws,
+       COALESCE(SUM(CASE
          WHEN (m.home_club_ID = c.club_ID AND m.home_goals < m.away_goals)
            OR (m.away_club_ID = c.club_ID AND m.away_goals < m.home_goals)
-         THEN 1 ELSE 0 END) AS losses,
-       SUM(CASE WHEN m.home_club_ID = c.club_ID THEN m.home_goals ELSE m.away_goals END) AS goals_for,
-       SUM(CASE WHEN m.home_club_ID = c.club_ID THEN m.away_goals ELSE m.home_goals END) AS goals_against,
-       SUM(CASE WHEN m.home_club_ID = c.club_ID THEN m.home_goals - m.away_goals
-                ELSE m.away_goals - m.home_goals END) AS goal_diff,
-       SUM(CASE
+         THEN 1 ELSE 0 END), 0) AS losses,
+       COALESCE(SUM(CASE WHEN m.home_club_ID = c.club_ID THEN m.home_goals ELSE m.away_goals END), 0) AS goals_for,
+       COALESCE(SUM(CASE WHEN m.home_club_ID = c.club_ID THEN m.away_goals ELSE m.home_goals END), 0) AS goals_against,
+       COALESCE(SUM(CASE WHEN m.home_club_ID = c.club_ID THEN m.home_goals - m.away_goals
+                         ELSE m.away_goals - m.home_goals END), 0) AS goal_diff,
+       COALESCE(SUM(CASE
          WHEN (m.home_club_ID = c.club_ID AND m.home_goals > m.away_goals)
            OR (m.away_club_ID = c.club_ID AND m.away_goals > m.home_goals) THEN 3
          WHEN m.home_goals = m.away_goals THEN 1
-         ELSE 0 END) AS points
+         ELSE 0 END), 0) AS points
      FROM Club c
      INNER JOIN Club_Competition_Participation ccp
        ON ccp.club_ID = c.club_ID AND ccp.competition_ID = ?
-     INNER JOIN \`Match\` m
+     LEFT JOIN \`Match\` m
        ON m.competition_ID = ? AND m.is_played = TRUE
        AND (m.home_club_ID = c.club_ID OR m.away_club_ID = c.club_ID)
      GROUP BY c.club_ID, c.club_name

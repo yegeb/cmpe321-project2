@@ -89,38 +89,49 @@ async function getMatchParticipants(matchId) {
 }
 
 async function submitResult({ matchId, homeGoals, awayGoals, attendance, playerStats }) {
-  // Step 1: Set team scores (without marking played) so per-player trigger can validate
-  await db.execute(
-    `UPDATE \`Match\` SET home_goals = ?, away_goals = ?, attendance = ? WHERE match_ID = ?`,
-    [homeGoals, awayGoals, attendance, matchId]
-  );
-
-  // Step 2: Update individual player stats (BEFORE UPDATE trigger checks player goals <= team goals)
-  for (const stat of playerStats) {
-    await db.execute(
-      `UPDATE Match_Participation
-       SET goals = ?, assists = ?, yellow_cards = ?, red_cards = ?,
-           minutes_played = ?, position_in_match = ?, rating = ?
-       WHERE match_ID = ? AND player_id = ?`,
-      [
-        stat.goals,
-        stat.assists,
-        stat.yellowCards,
-        stat.redCards,
-        stat.minutesPlayed,
-        stat.position,
-        stat.rating || null,
-        matchId,
-        stat.playerId,
-      ]
+  return db.withTransaction(async (tx) => {
+    const currentMatch = await tx.queryOne(
+      `SELECT is_played FROM \`Match\` WHERE match_ID = ?`,
+      [matchId]
     );
-  }
 
-  // Step 3: Mark as played (trg_match_result_goal_consistency validates sum now)
-  await db.execute(
-    `UPDATE \`Match\` SET is_played = TRUE WHERE match_ID = ?`,
-    [matchId]
-  );
+    if (!currentMatch) {
+      throw new Error('Match not found.');
+    }
+    if (currentMatch.is_played) {
+      throw new Error('Result has already been submitted for this match.');
+    }
+
+    await tx.execute(
+      `UPDATE \`Match\` SET home_goals = ?, away_goals = ?, attendance = ? WHERE match_ID = ?`,
+      [homeGoals, awayGoals, attendance, matchId]
+    );
+
+    for (const stat of playerStats) {
+      await tx.execute(
+        `UPDATE Match_Participation
+         SET goals = ?, assists = ?, yellow_cards = ?, red_cards = ?,
+             minutes_played = ?, position_in_match = ?, rating = ?
+         WHERE match_ID = ? AND player_id = ?`,
+        [
+          stat.goals,
+          stat.assists,
+          stat.yellowCards,
+          stat.redCards,
+          stat.minutesPlayed,
+          stat.position,
+          stat.rating || null,
+          matchId,
+          stat.playerId,
+        ]
+      );
+    }
+
+    await tx.execute(
+      `UPDATE \`Match\` SET is_played = TRUE WHERE match_ID = ?`,
+      [matchId]
+    );
+  });
 }
 
 module.exports = {

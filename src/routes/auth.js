@@ -20,6 +20,12 @@ function validatePassword(plain) {
   return null; // valid
 }
 
+function renderWithFlash(req, res, view, extra = {}) {
+  res.locals.flash = req.session.flash ?? res.locals.flash ?? null;
+  delete req.session.flash;
+  return res.render(view, extra);
+}
+
 // ── Index ─────────────────────────────────────────────────────────────────
 
 router.get('/', (req, res) => res.render('index'));
@@ -97,7 +103,7 @@ router.post('/register/player', async (req, res) => {
           date_of_birth, market_value, main_position, strong_foot, height_cm } = req.body;
 
   const err = validatePassword(password);
-  if (err) { req.session.flash = err; return res.render('register_player', { body: req.body }); }
+  if (err) { req.session.flash = err; return renderWithFlash(req, res, 'register_player', { body: req.body }); }
 
   try {
     const pid    = await db.nextId('Person', 'person_ID');
@@ -114,7 +120,7 @@ router.post('/register/player', async (req, res) => {
     res.redirect('/login');
   } catch (err) {
     req.session.flash = `Error: ${err.message}`;
-    res.render('register_player', { body: req.body });
+    renderWithFlash(req, res, 'register_player', { body: req.body });
   }
 });
 
@@ -127,7 +133,7 @@ router.post('/register/manager', async (req, res) => {
           date_of_birth, preferred_formation, experience_level } = req.body;
 
   const err = validatePassword(password);
-  if (err) { req.session.flash = err; return res.render('register_manager', { body: req.body }); }
+  if (err) { req.session.flash = err; return renderWithFlash(req, res, 'register_manager', { body: req.body }); }
 
   try {
     const pid    = await db.nextId('Person', 'person_ID');
@@ -144,7 +150,7 @@ router.post('/register/manager', async (req, res) => {
     res.redirect('/login');
   } catch (err) {
     req.session.flash = `Error: ${err.message}`;
-    res.render('register_manager', { body: req.body });
+    renderWithFlash(req, res, 'register_manager', { body: req.body });
   }
 });
 
@@ -157,7 +163,7 @@ router.post('/register/referee', async (req, res) => {
           date_of_birth, license_level, years_experience } = req.body;
 
   const err = validatePassword(password);
-  if (err) { req.session.flash = err; return res.render('register_referee', { body: req.body }); }
+  if (err) { req.session.flash = err; return renderWithFlash(req, res, 'register_referee', { body: req.body }); }
 
   try {
     const pid    = await db.nextId('Person', 'person_ID');
@@ -174,7 +180,7 @@ router.post('/register/referee', async (req, res) => {
     res.redirect('/login');
   } catch (err) {
     req.session.flash = `Error: ${err.message}`;
-    res.render('register_referee', { body: req.body });
+    renderWithFlash(req, res, 'register_referee', { body: req.body });
   }
 });
 
@@ -186,7 +192,7 @@ router.post('/register/db-manager', async (req, res) => {
   const { username, password } = req.body;
 
   const err = validatePassword(password);
-  if (err) { req.session.flash = err; return res.render('register_db_manager', { body: req.body }); }
+  if (err) { req.session.flash = err; return renderWithFlash(req, res, 'register_db_manager', { body: req.body }); }
 
   try {
     const pwHash = hashPassword(password);
@@ -198,7 +204,7 @@ router.post('/register/db-manager', async (req, res) => {
     res.redirect('/login');
   } catch (err) {
     req.session.flash = `Error: ${err.message}`;
-    res.render('register_db_manager', { body: req.body });
+    renderWithFlash(req, res, 'register_db_manager', { body: req.body });
   }
 });
 

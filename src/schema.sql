@@ -303,6 +303,12 @@ BEFORE INSERT ON `Match`
 FOR EACH ROW
 BEGIN
     DECLARE conflict_count INT;
+
+    IF NEW.home_club_ID = NEW.away_club_ID THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Home club and away club must be different.';
+    END IF;
+
     SELECT COUNT(*) INTO conflict_count
     FROM `Match`
     WHERE (home_club_ID IN (NEW.home_club_ID, NEW.away_club_ID)
@@ -523,6 +529,11 @@ CREATE TRIGGER trg_match_result_completeness
 BEFORE UPDATE ON `Match`
 FOR EACH ROW
 BEGIN
+    IF OLD.is_played = TRUE THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Played matches are locked and cannot be modified.';
+    END IF;
+
     IF NEW.is_played = TRUE THEN
         IF NEW.home_goals IS NULL OR NEW.away_goals IS NULL OR NEW.attendance IS NULL THEN
             SIGNAL SQLSTATE '45000'
@@ -572,6 +583,16 @@ BEFORE UPDATE ON Match_Participation
 FOR EACH ROW
 BEGIN
     DECLARE team_goals INT;
+    DECLARE match_played BOOLEAN;
+
+    SELECT is_played INTO match_played
+    FROM `Match`
+    WHERE match_ID = NEW.match_ID;
+
+    IF match_played = TRUE THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Player statistics for played matches are locked and cannot be modified.';
+    END IF;
 
     SELECT CASE WHEN home_club_ID = NEW.club_id THEN home_goals ELSE away_goals END
     INTO team_goals
