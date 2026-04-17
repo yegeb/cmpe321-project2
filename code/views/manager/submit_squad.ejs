@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head><title>Submit Squad - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Submit Squad</h1>
+<p><strong><%= match.home_club %></strong> vs <strong><%= match.away_club %></strong>
+   — <%= match.match_date ? String(match.match_date).split('T')[0] : '' %> <%= match.match_time %></p>
+<p>Select 11–23 players. Tick "Starter" for exactly 11.</p>
+
+<form method="POST" action="/manager/submit-squad/<%= match.match_ID %>">
+  <table border="1">
+    <tr><th>Select</th><th>Name</th><th>Position</th><th>Starter</th></tr>
+    <% eligible.forEach(p => {
+         const selected = alreadyIds.has(p.person_ID);
+    %>
+    <tr>
+      <td><input type="checkbox" name="player_id" value="<%= p.person_ID %>" <%= selected ? 'checked' : '' %>></td>
+      <td><%= p.name %> <%= p.surname %></td>
+      <td><%= p.main_position %></td>
+      <td><input type="checkbox" name="is_starter" value="<%= p.person_ID %>"></td>
+    </tr>
+    <% }) %>
+  </table>
+  <p><button type="submit">Submit Squad</button></p>
+</form>
+<p><a href="/manager/fixtures">Back to Fixtures</a></p>
+</body>
+</html>

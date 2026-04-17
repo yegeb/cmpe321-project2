@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>DB Manager Dashboard - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Database Manager Dashboard</h1>
+<p>Welcome, <strong><%= user.username %></strong>.</p>
+<h2>Operations</h2>
+<ul>
+  <li><a href="/db-manager/stadiums">View All Stadiums</a></li>
+  <li><a href="/db-manager/rename-stadium">Rename a Stadium</a></li>
+  <li><a href="/db-manager/schedule-match">Schedule a Match</a></li>
+  <li><a href="/db-manager/create-competition">Create a Competition</a></li>
+  <li><a href="/db-manager/assign-manager">Assign Manager to Club</a></li>
+  <li><a href="/db-manager/register-transfer">Register Transfer &amp; Contract</a></li>
+  <li><a href="/db-manager/create-user">Create New User</a></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head><title>Assign Manager - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Assign Manager to Club</h1>
+
+<h2>Current Assignments</h2>
+<% if (current.length === 0) { %>
+  <p>No active assignments.</p>
+<% } else { %>
+<table border="1">
+  <tr><th>Manager</th><th>Club</th><th>Since</th><th>Action</th></tr>
+  <% current.forEach(a => { %>
+  <tr>
+    <td><%= a.name %> <%= a.surname %></td>
+    <td><%= a.club_name %></td>
+    <td><%= a.start_date ? String(a.start_date).split('T')[0] : '' %></td>
+    <td>
+      <form method="POST" action="/db-manager/assign-manager">
+        <input type="hidden" name="manager_id" value="<%= a.manager_ID %>">
+        <input type="hidden" name="action" value="close">
+        <button type="submit">Remove</button>
+      </form>
+    </td>
+  </tr>
+  <% }) %>
+</table>
+<% } %>
+
+<h2>New Assignment</h2>
+<form method="POST" action="/db-manager/assign-manager">
+  <input type="hidden" name="action" value="assign">
+  <p>
+    <label>Manager:
+      <select name="manager_id">
+        <% managers.forEach(m => { %>
+        <option value="<%= m.person_ID %>"><%= m.name %> <%= m.surname %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Club:
+      <select name="club_id">
+        <% clubs.forEach(c => { %>
+        <option value="<%= c.club_ID %>"><%= c.club_name %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p><label>Start Date: <input type="date" name="start_date" required></label></p>
+  <p><button type="submit">Assign</button></p>
+</form>
+</body>
+</html>

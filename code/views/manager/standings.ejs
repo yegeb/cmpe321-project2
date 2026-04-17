@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head><title>League Standings - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>League Standings</h1>
+
+<form method="GET" action="/manager/standings">
+  <label>Competition:
+    <select name="competition_id">
+      <option value="">-- Select --</option>
+      <% competitions.forEach(c => { %>
+      <option value="<%= c.competition_ID %>" <%= competition_id == c.competition_ID ? 'selected' : '' %>>
+        <%= c.name %> (<%= c.season %>)
+      </option>
+      <% }) %>
+    </select>
+  </label>
+  <button type="submit">Show</button>
+</form>
+
+<% if (standings.length > 0) { %>
+<table border="1">
+  <tr>
+    <th>#</th><th>Club</th><th>MP</th><th>W</th><th>D</th><th>L</th>
+    <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+  </tr>
+  <% standings.forEach((s, i) => { %>
+  <tr>
+    <td><%= i + 1 %></td>
+    <td><%= s.club_name %></td>
+    <td><%= s.played %></td>
+    <td><%= s.wins %></td>
+    <td><%= s.draws %></td>
+    <td><%= s.losses %></td>
+    <td><%= s.goals_for %></td>
+    <td><%= s.goals_against %></td>
+    <td><%= s.goal_diff %></td>
+    <td><strong><%= s.points %></strong></td>
+  </tr>
+  <% }) %>
+</table>
+<% } else if (competition_id) { %>
+<p>No played matches found for this competition.</p>
+<% } %>
+</body>
+</html>

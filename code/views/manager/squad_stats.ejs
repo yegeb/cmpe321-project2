@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head><title>Squad Statistics - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Squad Statistics — <%= club.club_name %></h1>
+
+<form method="GET" action="/manager/squad-stats">
+  <label>Competition:
+    <select name="competition_id">
+      <option value="">All (current squad)</option>
+      <% competitions.forEach(c => { %>
+      <option value="<%= c.competition_ID %>" <%= competition_id == c.competition_ID ? 'selected' : '' %>>
+        <%= c.name %> (<%= c.season %>)
+      </option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Season:
+    <select name="season">
+      <option value="">All</option>
+      <% seasons.forEach(s => { %>
+      <option value="<%= s.season %>" <%= season === s.season ? 'selected' : '' %>><%= s.season %></option>
+      <% }) %>
+    </select>
+  </label>
+  <button type="submit">Filter</button>
+</form>
+
+<table border="1">
+  <tr>
+    <th>Name</th><th>Age</th><th>Position</th><th>Foot</th><th>Height</th>
+    <th>Market Value</th><th>Nationality</th>
+    <th>MP</th><th>Goals</th><th>Assists</th><th>YC</th><th>RC</th>
+    <th>Avg Rating</th><th>Avg Min</th>
+  </tr>
+  <% players.forEach(p => { %>
+  <tr>
+    <td><%= p.name %> <%= p.surname %></td>
+    <td><%= p.age %></td>
+    <td><%= p.main_position %></td>
+    <td><%= p.strong_foot %></td>
+    <td><%= p.height_cm %> cm</td>
+    <td>€<%= Number(p.market_value).toLocaleString() %></td>
+    <td><%= p.nationality %></td>
+    <td><%= p.matches_played %></td>
+    <td><%= p.goals %></td>
+    <td><%= p.assists %></td>
+    <td><%= p.yellow_cards %></td>
+    <td><%= p.red_cards %></td>
+    <td><%= p.avg_rating ?? '-' %></td>
+    <td><%= p.avg_minutes ?? '-' %></td>
+  </tr>
+  <% }) %>
+</table>
+</body>
+</html>

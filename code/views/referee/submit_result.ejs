@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><title>Submit Result - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Submit Match Result</h1>
+<p><strong><%= match.home_club %></strong> vs <strong><%= match.away_club %></strong>
+   — <%= match.match_date ? String(match.match_date).split('T')[0] : '' %> <%= match.match_time %></p>
+<p>Stadium capacity: <%= match.stadium_capacity %></p>
+
+<form method="POST" action="/referee/submit-result/<%= match.match_ID %>">
+  <p><label>Home Goals: <input type="number" name="home_goals" min="0" required></label></p>
+  <p><label>Away Goals: <input type="number" name="away_goals" min="0" required></label></p>
+  <p><label>Attendance (max <%= match.stadium_capacity %>): <input type="number" name="attendance" min="0" max="<%= match.stadium_capacity %>" required></label></p>
+
+  <% if (participants.length > 0) { %>
+  <h2>Player Statistics</h2>
+  <table border="1">
+    <tr>
+      <th>Player</th><th>Club</th><th>Position</th><th>Minutes</th>
+      <th>Goals</th><th>Assists</th><th>Yellow</th><th>Red</th><th>Rating (1-10)</th>
+    </tr>
+    <% participants.forEach(p => { %>
+    <tr>
+      <td><%= p.name %> <%= p.surname %></td>
+      <td><%= p.club_name %></td>
+      <td><input type="text"   name="position_<%= p.player_id %>" value="<%= p.position_in_match %>" size="6"></td>
+      <td><input type="number" name="minutes_<%= p.player_id %>"  value="<%= p.minutes_played %>" min="0" max="120" size="4"></td>
+      <td><input type="number" name="goals_<%= p.player_id %>"    value="<%= p.goals %>"        min="0" size="3"></td>
+      <td><input type="number" name="assists_<%= p.player_id %>"  value="<%= p.assists %>"      min="0" size="3"></td>
+      <td><input type="number" name="yellow_<%= p.player_id %>"   value="<%= p.yellow_cards %>" min="0" max="2" size="3"></td>
+      <td><input type="number" name="red_<%= p.player_id %>"      value="<%= p.red_cards %>"    min="0" max="1" size="3"></td>
+      <td><input type="number" name="rating_<%= p.player_id %>"   value="<%= p.rating ?? '' %>" min="1" max="10" step="0.1" size="4"></td>
+    </tr>
+    <% }) %>
+  </table>
+  <% } else { %>
+  <p>No squad submitted for this match yet.</p>
+  <% } %>
+
+  <p><button type="submit">Submit Result</button></p>
+</form>
+<p><a href="/referee/match-history">Back</a></p>
+</body>
+</html>

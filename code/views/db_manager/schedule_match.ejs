@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head><title>Schedule Match - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Schedule a Match</h1>
+<p>Note: matches must be in the future. No stadium, club, or referee can have two matches within 120 minutes.</p>
+<form method="POST" action="/db-manager/schedule-match">
+  <p>
+    <label>Date: <input type="date" name="match_date" required></label>
+  </p>
+  <p>
+    <label>Time: <input type="time" name="match_time" required></label>
+  </p>
+  <p>
+    <label>Stadium:
+      <select name="stadium_id">
+        <% stadiums.forEach(s => { %>
+        <option value="<%= s.stadium_ID %>"><%= s.stadium_name %><% if (s.city) { %> (<%= s.city %>)<% } %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Home Club:
+      <select name="home_club_id">
+        <% clubs.forEach(c => { %>
+        <option value="<%= c.club_ID %>"><%= c.club_name %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Away Club:
+      <select name="away_club_id">
+        <% clubs.forEach(c => { %>
+        <option value="<%= c.club_ID %>"><%= c.club_name %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Referee:
+      <select name="referee_id">
+        <% referees.forEach(r => { %>
+        <option value="<%= r.person_ID %>"><%= r.name %> <%= r.surname %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p>
+    <label>Competition:
+      <select name="competition_id">
+        <% competitions.forEach(c => { %>
+        <option value="<%= c.competition_ID %>"><%= c.name %> (<%= c.season %>)</option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p><button type="submit">Schedule Match</button></p>
+</form>
+</body>
+</html>

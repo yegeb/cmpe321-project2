@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head><title>Leaderboards - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Competition Leaderboards</h1>
+
+<form method="GET" action="/manager/leaderboards">
+  <label>Competition:
+    <select name="competition_id">
+      <option value="">-- Select --</option>
+      <% competitions.forEach(c => { %>
+      <option value="<%= c.competition_ID %>" <%= competition_id == c.competition_ID ? 'selected' : '' %>>
+        <%= c.name %> (<%= c.season %>)
+      </option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Category:
+    <select name="category">
+      <option value="goals"   <%= category === 'goals'   ? 'selected' : '' %>>Top Goal Scorers</option>
+      <option value="assists" <%= category === 'assists' ? 'selected' : '' %>>Top Assist Providers</option>
+      <option value="rating"  <%= category === 'rating'  ? 'selected' : '' %>>Highest Avg Rating (min 3 matches)</option>
+    </select>
+  </label>
+  <button type="submit">Show</button>
+</form>
+
+<% if (topPlayers.length > 0) { %>
+<h2>
+  <% if (category === 'goals')   { %>Top Goal Scorers<%
+     } else if (category === 'assists') { %>Top Assist Providers<%
+     } else { %>Highest Average Rating<% } %>
+</h2>
+<table border="1">
+  <tr>
+    <th>#</th><th>Player</th><th>Club</th><th>Matches Played</th>
+    <th><%= category === 'rating' ? 'Avg Rating' : category === 'assists' ? 'Assists' : 'Goals' %></th>
+  </tr>
+  <% topPlayers.forEach((p, i) => { %>
+  <tr>
+    <td><%= i + 1 %></td>
+    <td><%= p.name %> <%= p.surname %></td>
+    <td><%= p.club_name %></td>
+    <td><%= p.matches_played %></td>
+    <td><%= category === 'rating' ? p.metric : p.metric %></td>
+  </tr>
+  <% }) %>
+</table>
+<% } else if (competition_id) { %>
+<p>No data found.</p>
+<% } %>
+</body>
+</html>

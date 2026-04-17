@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head><title>Rename Stadium - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Rename Stadium</h1>
+<form method="POST" action="/db-manager/rename-stadium">
+  <p>
+    <label>Stadium:
+      <select name="stadium_id">
+        <% stadiums.forEach(s => { %>
+        <option value="<%= s.stadium_ID %>"><%= s.stadium_name %><% if (s.city) { %> (<%= s.city %>)<% } %></option>
+        <% }) %>
+      </select>
+    </label>
+  </p>
+  <p><label>New Name: <input type="text" name="new_name" required></label></p>
+  <p><button type="submit">Rename</button></p>
+</form>
+</body>
+</html>

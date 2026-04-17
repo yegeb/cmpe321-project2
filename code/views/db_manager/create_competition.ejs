@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><title>Create Competition - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Create Competition</h1>
+<form method="POST" action="/db-manager/create-competition">
+  <p><label>Name (e.g. Premier League): <input type="text" name="name" required></label></p>
+  <p><label>Season (e.g. 2025/2026): <input type="text" name="season" required></label></p>
+  <p><label>Country: <input type="text" name="country" required></label></p>
+  <p>
+    <label>Type:
+      <select name="competition_type">
+        <option value="League">League</option>
+        <option value="Cup">Cup</option>
+        <option value="International">International</option>
+      </select>
+    </label>
+  </p>
+  <p><button type="submit">Create</button></p>
+</form>
+</body>
+</html>

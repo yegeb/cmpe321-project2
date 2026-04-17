@@ -1,0 +1,20 @@
+{
+  "name": "transfer-db",
+  "version": "1.0.0",
+  "description": "TransferDB - CMPE321 Database Project",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js"
+  },
+  "keywords": ["database", "mysql", "express"],
+  "author": "CMPE321",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.8",
+    "mysql2": "^3.6.0",
+    "express-session": "^1.17.3",
+    "dotenv": "^16.0.3"
+  }
+}

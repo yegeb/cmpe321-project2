@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head><title>Register Manager - TransferDB</title></head>
+<body>
+<%- include('partials/flash') %>
+<h1>Register as Manager</h1>
+<form method="POST" action="/register/manager">
+  <p><label>Username: <input type="text" name="username" required></label></p>
+  <p><label>Password: <input type="password" name="password" required></label></p>
+  <p><label>Name: <input type="text" name="name" required></label></p>
+  <p><label>Surname: <input type="text" name="surname" required></label></p>
+  <p><label>Nationality: <input type="text" name="nationality" required></label></p>
+  <p><label>Date of Birth (YYYY-MM-DD): <input type="date" name="date_of_birth" required></label></p>
+  <p><label>Preferred Formation (e.g. 4-3-3): <input type="text" name="preferred_formation" required></label></p>
+  <p>
+    <label>Experience Level:
+      <select name="experience_level">
+        <option value="Beginner">Beginner</option>
+        <option value="Intermediate">Intermediate</option>
+        <option value="Advanced">Advanced</option>
+        <option value="Expert">Expert</option>
+      </select>
+    </label>
+  </p>
+  <p><button type="submit">Register</button></p>
+</form>
+<p><a href="/register">Back</a> | <a href="/login">Login</a></p>
+</body>
+</html>

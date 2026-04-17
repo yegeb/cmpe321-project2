@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Create User - TransferDB</title>
+  <script>
+    function showFields(role) {
+      var groups = ['fields-person', 'fields-player', 'fields-manager', 'fields-referee'];
+      groups.forEach(function(id) {
+        document.getElementById(id).style.display = 'none';
+      });
+      if (role === 'player' || role === 'manager' || role === 'referee') {
+        document.getElementById('fields-person').style.display = '';
+      }
+      if (role === 'player')  document.getElementById('fields-player').style.display = '';
+      if (role === 'manager') document.getElementById('fields-manager').style.display = '';
+      if (role === 'referee') document.getElementById('fields-referee').style.display = '';
+    }
+    window.onload = function() {
+      showFields(document.getElementById('role-select').value);
+    };
+  </script>
+</head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Create New User</h1>
+
+<form method="POST" action="/db-manager/create-user">
+  <p>
+    <label>Role:
+      <select id="role-select" name="role" onchange="showFields(this.value)">
+        <option value="player"     <%= selectedRole === 'player'     ? 'selected' : '' %>>Player</option>
+        <option value="manager"    <%= selectedRole === 'manager'    ? 'selected' : '' %>>Manager</option>
+        <option value="referee"    <%= selectedRole === 'referee'    ? 'selected' : '' %>>Referee</option>
+        <option value="db_manager" <%= selectedRole === 'db_manager' ? 'selected' : '' %>>Database Manager</option>
+      </select>
+    </label>
+  </p>
+
+  <p><label>Username: <input type="text" name="username" value="<%= body.username || '' %>" required></label></p>
+  <p><label>Password: <input type="password" name="password" required></label></p>
+
+  <div id="fields-person">
+    <p><label>Name: <input type="text" name="name" value="<%= body.name || '' %>"></label></p>
+    <p><label>Surname: <input type="text" name="surname" value="<%= body.surname || '' %>"></label></p>
+    <p><label>Nationality: <input type="text" name="nationality" value="<%= body.nationality || '' %>"></label></p>
+    <p><label>Date of Birth: <input type="date" name="date_of_birth" value="<%= body.date_of_birth || '' %>"></label></p>
+  </div>
+
+  <div id="fields-player">
+    <p><label>Market Value: <input type="number" name="market_value" min="1" value="<%= body.market_value || '' %>"></label></p>
+    <p>
+      <label>Main Position:
+        <select name="main_position">
+          <option value="Goalkeeper" <%= body.main_position === 'Goalkeeper' ? 'selected' : '' %>>Goalkeeper</option>
+          <option value="Defender"   <%= body.main_position === 'Defender'   ? 'selected' : '' %>>Defender</option>
+          <option value="Midfielder" <%= body.main_position === 'Midfielder' ? 'selected' : '' %>>Midfielder</option>
+          <option value="Forward"    <%= body.main_position === 'Forward'    ? 'selected' : '' %>>Forward</option>
+        </select>
+      </label>
+    </p>
+    <p>
+      <label>Strong Foot:
+        <select name="strong_foot">
+          <option value="Right" <%= body.strong_foot === 'Right' ? 'selected' : '' %>>Right</option>
+          <option value="Left"  <%= body.strong_foot === 'Left'  ? 'selected' : '' %>>Left</option>
+          <option value="Both"  <%= body.strong_foot === 'Both'  ? 'selected' : '' %>>Both</option>
+        </select>
+      </label>
+    </p>
+    <p><label>Height (cm): <input type="number" name="height_cm" min="1" value="<%= body.height_cm || '' %>"></label></p>
+  </div>
+
+  <div id="fields-manager">
+    <p><label>Preferred Formation: <input type="text" name="preferred_formation" value="<%= body.preferred_formation || '' %>"></label></p>
+    <p>
+      <label>Experience Level:
+        <select name="experience_level">
+          <option value="Beginner"     <%= body.experience_level === 'Beginner'     ? 'selected' : '' %>>Beginner</option>
+          <option value="Intermediate" <%= body.experience_level === 'Intermediate' ? 'selected' : '' %>>Intermediate</option>
+          <option value="Advanced"     <%= body.experience_level === 'Advanced'     ? 'selected' : '' %>>Advanced</option>
+          <option value="Expert"       <%= body.experience_level === 'Expert'       ? 'selected' : '' %>>Expert</option>
+        </select>
+      </label>
+    </p>
+  </div>
+
+  <div id="fields-referee">
+    <p><label>License Level: <input type="text" name="license_level" value="<%= body.license_level || '' %>"></label></p>
+    <p><label>Years of Experience: <input type="number" name="years_experience" min="0" value="<%= body.years_experience || '' %>"></label></p>
+  </div>
+
+  <p><button type="submit">Create User</button></p>
+</form>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head><title>Referee Match History - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Match History</h1>
+<table border="1">
+  <tr>
+    <th>Date</th><th>Time</th><th>Competition</th><th>Stadium</th>
+    <th>Home</th><th>Away</th><th>Score</th><th>Attendance</th>
+    <th>Yellow Cards</th><th>Red Cards</th><th>Action</th>
+  </tr>
+  <% matches.forEach(m => { %>
+  <tr>
+    <td><%= m.match_date ? String(m.match_date).split('T')[0] : '' %></td>
+    <td><%= m.match_time %></td>
+    <td><%= m.competition %></td>
+    <td><%= m.stadium_name %></td>
+    <td><%= m.home_club %></td>
+    <td><%= m.away_club %></td>
+    <td>
+      <% if (m.is_played) { %><%= m.home_goals %> - <%= m.away_goals %><% } else { %>Scheduled<% } %>
+    </td>
+    <td><%= m.attendance ?? '-' %></td>
+    <td><%= m.match_yellows %></td>
+    <td><%= m.match_reds %></td>
+    <td>
+      <% if (!m.is_played) { %>
+      <a href="/referee/submit-result/<%= m.match_ID %>">Submit Result</a>
+      <% } %>
+    </td>
+  </tr>
+  <% }) %>
+</table>
+</body>
+</html>

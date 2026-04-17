@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>Referee Career Stats - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Career Statistics</h1>
+<% if (stats) { %>
+<table border="1">
+  <tr><th>Matches Officiated</th><th>Total Yellow Cards</th><th>Total Red Cards</th></tr>
+  <tr>
+    <td><%= stats.matches_officiated %></td>
+    <td><%= stats.total_yellow %></td>
+    <td><%= stats.total_red %></td>
+  </tr>
+</table>
+<% } %>
+<p><a href="/referee/match-history">View Full Match History</a></p>
+</body>
+</html>

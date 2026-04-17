@@ -1,0 +1,11 @@
+manager_id,username,password,name,surname,nationality,date_of_birth,preferred_formation,experience_level
+2001,fatih_terim,hash_M@nager1,Fatih,Terim,Türkiye,1953-09-04,4-4-2,Expert
+2002,jorge_jesus,hash_M@nager2,Jorge,Jesus,Portugal,1954-07-24,4-1-3-2,Expert
+2003,ismail_kartal,hash_M3,Ismail,Kartal,Türkiye,1961-05-25,4-2-3-1,Advanced
+2004,pep_guardiola,hash_M4,Pep,Guardiola,Spain,1971-01-18,4-3-3,Expert
+2005,jurgen_klopp,hash_M5,Jurgen,Klopp,Germany,1967-06-16,4-3-3,Expert
+2006,sergen_yalcin,hash_M6,Sergen,Yalcin,Türkiye,1972-10-05,4-2-3-1,Advanced
+2007,okan_buruk,hash_M7,Okan,Buruk,Türkiye,1973-10-19,4-2-3-1,Advanced
+2008,jose_mourinho,hash_M8,Jose,Mourinho,Portugal,1963-01-26,4-2-3-1,Expert
+2009,volkan_demirel,hash_M9,Volkan,Demirel,Türkiye,1981-10-27,4-2-3-1,Intermediate
+2010,clubs_coach,coach123,Anonymus,Coach,Zimbabve,2000-01-01,4-3-3,Intermediate

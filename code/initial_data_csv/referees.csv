@@ -1,0 +1,8 @@
+referee_id,username,password,name,surname,nationality,date_of_birth,license_level,years_of_experience
+1001,cuneyt_cakir,hash_R3feree!,Cuneyt,Cakir,Türkiye,1976-11-23,FIFA,20
+1002,halil_meler,hash_R3feree2,Halil,Meler,Türkiye,1986-08-01,FIFA,10
+1003,michael_oliver,hash_Ref03,Michael,Oliver,England,1985-02-20,UEFA Elite,15
+1004,anthony_taylor,hash_Ref04,Anthony,Taylor,England,1978-10-20,UEFA Elite,18
+1005,szymon_marciniak,hash_Ref05,Szymon,Marciniak,Poland,1981-01-07,FIFA,14
+1006,stephanie_frappart,hash_Ref06,Stephanie,Frappart,France,1983-12-14,FIFA,12
+1007,ali_palabiyik,hash_Ref07,Ali,Palabiyik,Türkiye,1981-08-14,National,12

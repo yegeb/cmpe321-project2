@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Register Database Manager - TransferDB</title></head>
+<body>
+<%- include('partials/flash') %>
+<h1>Register as Database Manager</h1>
+<form method="POST" action="/register/db-manager">
+  <p><label>Username: <input type="text" name="username" required></label></p>
+  <p><label>Password: <input type="password" name="password" required></label></p>
+  <p><button type="submit">Register</button></p>
+</form>
+<p>Password requirements: min 8 chars, uppercase, lowercase, digit, special character.</p>
+<p><a href="/register">Back</a> | <a href="/login">Login</a></p>
+</body>
+</html>

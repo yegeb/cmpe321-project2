@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head><title>Fixtures - TransferDB</title></head>
+<body>
+<%- include('../partials/nav') %>
+<%- include('../partials/flash') %>
+<h1>Fixtures &amp; Results — <%= club.club_name %></h1>
+
+<form method="GET" action="/manager/fixtures">
+  <label>Competition:
+    <select name="competition_id">
+      <option value="">All</option>
+      <% competitions.forEach(c => { %>
+      <option value="<%= c.competition_ID %>" <%= competition_id == c.competition_ID ? 'selected' : '' %>>
+        <%= c.name %> (<%= c.season %>)
+      </option>
+      <% }) %>
+    </select>
+  </label>
+  <label>Season:
+    <select name="season">
+      <option value="">All</option>
+      <% seasons.forEach(s => { %>
+      <option value="<%= s.season %>" <%= season === s.season ? 'selected' : '' %>><%= s.season %></option>
+      <% }) %>
+    </select>
+  </label>
+  <button type="submit">Filter</button>
+</form>
+
+<table border="1">
+  <tr>
+    <th>Date</th><th>Time</th><th>Home</th><th>Away</th>
+    <th>Competition</th><th>Stadium</th><th>Score</th><th>Result</th><th>Action</th>
+  </tr>
+  <% fixtures.forEach(m => { %>
+  <tr>
+    <td><%= m.match_date ? String(m.match_date).split('T')[0] : '' %></td>
+    <td><%= m.match_time %></td>
+    <td><%= m.home_club %></td>
+    <td><%= m.away_club %></td>
+    <td><%= m.competition %> (<%= m.season %>)</td>
+    <td><%= m.stadium_name %></td>
+    <td>
+      <% if (m.is_played) { %>
+        <%= m.home_goals %> - <%= m.away_goals %>
+      <% } else { %>
+        Scheduled
+      <% } %>
+    </td>
+    <td>
+      <% if (m.is_played) {
+           const myGoals  = (m.home_club_ID === club.club_ID) ? m.home_goals : m.away_goals;
+           const oppGoals = (m.home_club_ID === club.club_ID) ? m.away_goals : m.home_goals;
+           if (myGoals > oppGoals)       { %>Win<%
+           } else if (myGoals < oppGoals){ %>Loss<%
+           } else                        { %>Draw<% }
+         } else { %>-<% } %>
+    </td>
+    <td>
+      <% if (!m.is_played) { %>
+      <a href="/manager/submit-squad/<%= m.match_ID %>">Submit Squad</a>
+      <% } %>
+    </td>
+  </tr>
+  <% }) %>
+</table>
+</body>
+</html>
